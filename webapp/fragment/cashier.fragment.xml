@@ -1,0 +1,26 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:l="sap.ui.layout" xmlns:f="sap.ui.layout.form">
+	<Dialog title="Cashier Detail" contentWidth="25%" class="cashierLogin">
+		<content>
+			<VBox fitContainer="true" alignContent="Center" class="sapUiSizeCompact sapUiTinyMarginBottom">
+				
+				<f:SimpleForm id="SimpleFormChange354" editable="true" layout="ResponsiveGridLayout"  labelSpanXL="3" labelSpanL="3"
+					labelSpanM="3" labelSpanS="12" adjustLabelSpan="false" emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0" columnsXL="1"
+					columnsL="1" columnsM="1" singleContainerFullSize="false">
+					<f:content>
+						<Label design="Bold" text="Enter Cashier ID" class="cashierLogin"/>
+						<Input/>
+						<Label design="Bold" text="Enter Pin" class="cashierLogin"/>
+						<Input type="Password"/>
+					</f:content>
+				</f:SimpleForm>
+			</VBox>
+			
+		</content>
+		<beginButton>
+			<Button text="Close" press="fnCloseCashier" class="cstmBtn"/>
+		</beginButton>
+		<endButton>
+			<Button text="Validate" press="fnValidateCashier" class="cstmBtn"/>
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

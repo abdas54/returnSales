@@ -1,0 +1,100 @@
+<mvc:View controllerName="com.eros.returnsales.controller.MainView"
+   xmlns:mvc="sap.ui.core.mvc" displayBlock="true" xmlns="sap.m"
+	xmlns:l="sap.ui.layout" xmlns:ndc="sap.ndc" xmlns:f="sap.ui.layout.form" xmlns:core="sap.ui.core">
+   <Page id="page" title="{i18n>title}" enableScrolling="false" showHeader="false" >
+		
+		<content>
+			<HBox width="100%">
+           
+				<VBox width="80%" height="60%">
+                 <HBox class="sapUiSmallMarginTop sapUiSmallMarginBegin">
+                <Input class="sapUiSmallMarginBegin" id="amount"  placeholder="Enter Sales Transacation Number">
+                <layoutData>
+								<FlexItemData growFactor="1"/>
+							</layoutData>
+				</Input>
+                <Button class="sapUiSmallMarginBegin" text="Search" type="Transparent" />
+                </HBox>
+                <ScrollContainer class="sapUiSmallMarginTop sapUiSmallMarginBegin" horizontal="false" vertical="true">
+						<Table id="idProductsTable" headerText="Item List" items="{ProductModel>/Product}" mode="MultiSelect"  sticky="ColumnHeaders"
+							itemPress="onProductRowPress">
+							<columns>
+								
+								<Column width="6em">
+									<Text text="Model No."/>
+								</Column>
+								<Column width="6em" hAlign="Center">
+									<Text text="Act Quantity"/>
+								</Column>
+								<Column width="5em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+									<Text text="Gross"/>
+								</Column>
+								<Column width="5em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+									<Text text="Discount/Surcharge"/>
+								</Column>
+								<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+									<Text text="Ext Price"/>
+								</Column>
+									<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+									<Text text="Return Qty"/>
+								</Column>
+									<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+									<Text text="Reason Codes"/>
+								</Column>
+									<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+									<Text text="Store List"/>
+								</Column>
+								
+							</columns>
+							<items>
+								<ColumnListItem type="Active">
+									<cells>
+										
+										<ObjectIdentifier title="{ProductModel>Itemcode}" text="{ProductModel>Description}"/>
+										<Text/>
+                                        <Text/>
+                                        <Text/>
+                                        <Text/>
+										<Input/>
+										<Button />
+										<Button />
+										
+									</cells>
+								</ColumnListItem>
+							</items>
+						</Table>
+					</ScrollContainer>
+				</VBox>
+            
+				<VBox width="20%">
+					<l:VerticalLayout class="sapUiContentPadding equalColumns" width="100%">
+						
+						<GenericTile header="CUSTOMER" frameType="OneByHalf" press="onPressCustData" class="customTile">
+							<TileContent>
+								<Button type="Transparent" icon="sap-icon://customer"/>
+							</TileContent>
+						</GenericTile>
+                        <GenericTile header="RETURN" frameType="OneByHalf" press="onPressReturn" class="customTile">
+							<TileContent>
+								<Button type="Transparent" icon="sap-icon://undo"/>
+
+							</TileContent>
+						</GenericTile>
+						<GenericTile header="DISCOUNT" frameType="OneByHalf" press="onPressReturn" class="customTile">
+							<TileContent>
+								<Button type="Transparent" icon="sap-icon://undo"/>
+
+							</TileContent>
+						</GenericTile>
+						<GenericTile header="PAYMENTS" frameType="OneByHalf" press="onPressPayments1" class="customTile">
+							<TileContent>
+								<Button type="Transparent" icon="sap-icon://money-bills"/>
+							</TileContent>
+						</GenericTile>
+						
+					</l:VerticalLayout>
+				</VBox>
+			</HBox>
+		</content>
+	</Page>
+</mvc:View>

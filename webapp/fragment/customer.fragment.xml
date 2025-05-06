@@ -1,0 +1,204 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:f="sap.f.cards">
+	<Dialog title="Customer Details" contentHeight="400px" contentWidth="1000px">
+		<content >
+        <SearchField
+                id="phoneInput"
+                width="40%"
+                class="sapUiMediumMarginBeginEnd sapUiSmallMarginTop"
+                placeholder="Enter registered Mobile Number"
+                search="onSearchNumber"
+            />
+			<!-- <Input class="sapUiSmallMarginEnd" id="phoneInput" width="40%" placeholder="Enter Customer Phone Number" liveChange="onPhoneChange"/> -->
+			<HBox>
+				<VBox class="sapUiSmallMargin">
+					<List items="{CustModel>/customerData}" mode="None" class="roundedList">
+						<StandardListItem title="{CustModel>option}" type="Active" press="onOptionSelect"/>
+					</List>
+				</VBox>
+				<VBox >
+					<!-- <Panel visible="{= ${ShowSection>/selectedMode} === 'Basic Information' }">
+						<content> -->
+							
+								<form:SimpleForm  columnsM="2" columnsL="2" columnsXL="2" visible="{= ${ShowSection>/selectedMode} === 'Basic Information' }">
+                                
+                                <Label text="Customer Id" />
+                                <Input editable="false" value="{custAddModel>/Kunnr}"/>
+                                <Label text="Phone Number" />
+                                 <!-- <FlexBox
+                           
+                            justifyContent="Start"
+                            alignItems="Center"
+                        > -->
+                        <HBox>
+                            <ComboBox selectedKey="{custAddModel>/country_code}" 
+                                showSecondaryValues="true"
+                                items="{ path: 'CustomerModel>/ZER_COUNTRY_DETSet', sorter: { path: 'CustomerModel>CountryDesc' } }"
+                            >
+                                <core:ListItem
+                                    key="{CustomerModel>CountryCode}"
+                                    text="{CustomerModel>CountryCode}-{CustomerModel>CountryDesc}"
+                                    additionalText="{CustomerModel>CountryDesc}"
+                                />
+                                <layoutData>
+								<FlexItemData growFactor="1"/>
+							</layoutData>
+                            </ComboBox>
+                            <Input
+                                id="mobileNumber"
+                                type="Tel"
+                                value="{custAddModel>/MobNo}"
+                            /> </HBox>
+                        <!-- </FlexBox> -->
+
+                                <!-- <Input type="Tel" value="{custAddModel>/MobNo}"/> -->
+                                <Label text="First Name" />
+								<Input placeholder="Enter name" value="{custAddModel>/Name1}"/>
+                                <Label text="Last Name" />
+								<Input placeholder="Enter name" value="{custAddModel>/Name2}"/>
+								<Label text="Email" />
+                                <Input  type="Email" value="{custAddModel>/Email}"/>
+								<Label  text="Date of Birth"/>
+                                <DatePicker  value="{custAddModel>/Dob}"/>
+                                <Label required="true" text="Customer Type"/>
+                                <Select  change="onCustomerTypeChange" selectedKey="{custAddModel>/CustType}">
+                                    <items>
+                                        <core:Item key="0" text=""/>
+                                        <core:Item key="1" text="Local"/>
+                                        <core:Item key="2" text="Tourist"/>
+                                    </items>
+                                </Select>
+                                <Label id="cardTypelbl" text="Card Type"/>
+                                <Input  value="{custAddModel>/CardType}"/>
+                                <Label id="issuedBylbl" text="Issued By"/>
+                                <Input  value="{custAddModel>/IssueBy}"/>
+                                <Label id="cardNumberlbl" text="Card Number"/>
+                                <Input  value="{custAddModel>/IdenCardNum}"/>
+                                
+								</form:SimpleForm>
+							
+						<!-- </content>
+					</Panel> -->
+					
+					<Panel width="700px" visible="{= ${ShowSection>/selectedMode} === 'Customer Address' }">
+						<content>
+							<RadioButtonGroup id="addressRbGrp" columns="5"  class="sapUiSmallMarginBottom" selectedIndex="0" select="onSelectAddressType">
+									<RadioButton id="homeaddr" text="Home Address" />
+									<RadioButton id="offaddr" text="Office Address" />
+								<RadioButton id="otheraddr" text="Other Address" />
+								</RadioButtonGroup>
+							<HBox>
+							<VBox class="sapUiMediumMarginBeginEnd" id="homeSection" width="30%">
+                            <Label text="Address Line 1" />
+                            <Input value="{custAddModel>/home_add1}" />
+                            <Label text="Address Line 2" />
+                            <Input value="{custAddModel>/home_add2}" />
+                            <Label text="Street / PO Box" />
+                            <Input value="{custAddModel>/home_po}" />
+                            <Label text="City" />
+                            <Input value="{custAddModel>/home_City}" />
+                            <Label text="Country" />
+
+                            <ComboBox
+                                showSecondaryValues="true"
+                                selectedKey="{custAddModel>/home_Country}"
+                                items="{ path: 'CustomerModel>/ZER_COUNTRY_DETSet', sorter: { path: 'CustomerModel>CountryDesc' } }"
+                            >
+                                <core:ListItem
+                                    key="{CustomerModel>Country}"
+                                    text="{CustomerModel>CountryDesc}"
+                                    additionalText="{CustomerModel>CountryDesc}"
+                                />
+                            </ComboBox>
+							</VBox>
+							<VBox
+                            id="workSection"
+                            visible="false"
+                            width="30%"
+                            class="sapUiMediumMarginBeginEnd"
+                        >
+   
+                            <Label text="Address Line 1" />
+                            <Input value="{custAddModel>/off_add1}" />
+                            <Label text="Address Line 2" />
+                            <Input value="{custAddModel>/off_add2}" />
+                            <Label text="Street / PO Box" />
+                            <Input value="{custAddModel>/off_po}" />
+                            <Label text="City" />
+                            <Input value="{custAddModel>/off_City}" />
+                            <Label text="Country" />
+                            <ComboBox
+                                showSecondaryValues="true"
+                                selectedKey="{custAddModel>/off_Country}"
+                                items="{ path: 'CustomerModel>/ZER_COUNTRY_DETSet', sorter: { path: 'CustomerModel>CountryDesc' } }"
+                            >
+                                <core:ListItem
+                                    key="{CustomerModel>Country}"
+                                    text="{CustomerModel>CountryDesc}"
+                                    additionalText="{CustomerModel>CountryDesc}"
+                                />
+                            </ComboBox>
+                        </VBox>
+						 <VBox
+                            id="otherSection"
+                            visible="false"
+                            width="30%"
+                            class="sapUiMediumMarginBeginEnd"
+                        >
+                            
+                            <Label text="Address Line 1" />
+                            <Input value="{custAddModel>/oth_Add1}" />
+                            <Label text="Address Line 2" />
+                            <Input value="{custAddModel>/oth_Add2}" />
+                            <Label text="Street / PO Box" />
+                            <Input value="{custAddModel>/oth_po}" />
+                            <Label text="City" />
+                            <Input value="{custAddModel>/oth_City}" />
+                            <Label text="Country" />
+                            <ComboBox
+                                showSecondaryValues="true"
+                                selectedKey="{custAddModel>/oth_Country}"
+                                items="{ path: 'CustomerModel>/ZER_COUNTRY_DETSet', sorter: { path: 'CustomerModel>CountryDesc' } }"
+                            >
+                                <core:ListItem
+                                    key="{CustomerModel>Country}"
+                                    text="{CustomerModel>CountryDesc}"
+                                    additionalText="{CustomerModel>CountryDesc}"
+                                />
+                            </ComboBox>
+                        </VBox>
+							</HBox>
+								
+							
+						</content>
+					</Panel>
+					<Panel visible="{= ${ShowSection>/selectedMode} === 'Shipping Instruction' }">
+						<content>
+							<VBox class="sapUiSmallMargin">
+                            	<DatePicker value="{custAddModel>/shippingDate}" displayFormat="yyyy-MM-dd" valueFormat="yyyy-MM-dd"/>
+								<!-- <DatePicker value="{'path':'custAddModel>/shippingDate','type':'sap.ui.model.type.Date','formatOptions': {'pattern': 'yyyy-MM-dd'}}" placeholder="Enter Delivery Date"/> -->
+								<TextArea value="{custAddModel>/ShippingInst}" width="550px" placeholder="Enter Delivery Instruction"/>
+							</VBox>
+						</content>
+					</Panel>
+                    <Panel visible="{= ${ShowSection>/selectedMode} === 'Shipping Method' }">
+						<content>
+							<VBox class="sapUiSmallMargin">
+                            	<RadioButtonGroup  columns="5"  class="sapUiMediumMarginBottom" selectedIndex="{custAddModel>/ShippingMethod}">
+			                            <RadioButton  text="HOME DELIVERY" />  
+			                            <RadioButton  text="HD Install HA" />
+			                            <RadioButton  text="HD Install panels" /> 
+		                        </RadioButtonGroup>
+							</VBox>
+						</content>
+					</Panel>
+				</VBox>
+			</HBox>
+		</content>
+		<beginButton>
+			<Button text="Save" press="onPressCustSaveClose" class="cstmBtn"/>
+		</beginButton>
+		<endButton>
+			<Button text="Close" press="onPressCustClose" class="cstmBtn"/>
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

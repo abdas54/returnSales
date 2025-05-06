@@ -1,0 +1,188 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:f="sap.f.cards"
+	xmlns:l="sap.ui.layout" xmlns:g="sap.f">
+	<Dialog title="Payment" contentHeight="400px" contentWidth="1000px">
+		<content>
+			<Label design="Bold" text="Sale Amount:" class="sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+			<Text id="totalAmountText"  class="sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+			<Label design="Bold" text="Sale Balance Amount:" class="sapUiMediumMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+			<Text id="totalSaleBalText" class="sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+			<Label design="Bold" text="Tender Change Amount:" class="sapUiMediumMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+			<Text  id="totaltenderBal" class="sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+
+			 <ScrollContainer class="sapUiSmallMarginTop" height="300px" vertical="true">
+			<HBox>
+				<VBox class="sapUiSmallMargin">
+					<List items="{PaymentModel>/paymentOptions}" mode="None" class="roundedList">
+						<StandardListItem title="{PaymentModel>option}" type="Active" press="onOptionSelectPayment"/>
+					</List>
+				</VBox>
+				<VBox width="700px">
+					<Panel visible="{= ${ShowPaymentSection>/selectedMode} === 'Card' }">
+						<content>
+						<RadioButtonGroup  columns="5"  class="sapUiSmallMarginBottom" selectedIndex="{ShowPaymentSection>/cardPaymentMode}" select="onSelectCardPaymodeMode">
+									<RadioButton  text="Regular Mode" />
+									<RadioButton  text="Manual Mode" />
+							</RadioButtonGroup>
+							<VBox visible="{= ${ShowPaymentSection>/cardPaymentMode} === 0 }">
+							<Input id="creditAmount" placeholder="Enter Amount" change="onRetrieveTerminal" class="sapUiSmallMarginBottom"/>
+							<g:GridList items="{ShowPaymentSection>/Terminal}" noDataText="Enter Amount to Enable Terminal" itemPress="onPressTenderCard">
+    							<g:items>
+        							<g:GridListItem type="Active">
+            							<VBox class="sapUiSmallMargin">
+            								<layoutData>
+												<FlexItemData growFactor="1" shrinkFactor="0" /> <!-- Don't shrink below minimum size. Fill space if available. -->
+											</layoutData>
+                						<Text text="{ShowPaymentSection>Tid}" />
+                						<Text text="{ShowPaymentSection>Mid}" visible="false"/>
+            							</VBox>
+        							</g:GridListItem>
+    							</g:items>
+								</g:GridList>
+							</VBox>
+							<VBox visible="{= ${ShowPaymentSection>/cardPaymentMode} === 1 }">
+								<g:GridList items="{/CardPaymentMenthodsSet}" itemPress="onSelectCardType" >
+    							<g:items>
+        							<g:GridListItem type="Active" highlight="Success">
+            							<VBox class="sapUiSmallMargin">
+            								
+                						<Title text="{CardType}" />
+                						
+                                        
+            							</VBox>
+        							</g:GridListItem>
+    							</g:items>
+								</g:GridList>
+							
+							</VBox>
+						
+						</content>
+					</Panel>
+					<Panel visible="{= ${ShowPaymentSection>/selectedMode} === 'CreditNote' }">
+						<content>
+							<VBox class="sapUiSmallMargin">
+								<Input id="creditNote" placeholder="Enter Credit Note " liveChange="onCardNumberChange" maxLength="16"/>
+								<Button text="Redeem" press="onSubmit"/>
+							</VBox>
+						</content>
+					</Panel>
+					<Panel visible="{= ${ShowPaymentSection>/selectedMode} === 'Advance Payment' }">
+						<content>
+							<VBox class="sapUiSmallMargin">
+								<Input id="advPayment" placeholder="Enter Advance Payment " liveChange="onCardNumberChange" maxLength="16"/>
+								<Button text="Submit" press="onSubmit"/>
+							</VBox>
+						</content>
+					</Panel>
+					<Panel visible="{= ${ShowPaymentSection>/selectedMode} === 'Gift Voucher' }">
+						<content>
+							<VBox class="sapUiSmallMargin">
+								<Input id="giftVoucher" placeholder="Enter Gift Voucher " liveChange="onCardNumberChange" maxLength="16"/>
+								<Button text="Redeem" press="onSubmit"/>
+							</VBox>
+						</content>
+					</Panel>
+					<Panel visible="{= ${ShowPaymentSection>/selectedMode} === 'Non-GV' }">
+						<content>
+							<VBox >
+							<g:GridList items="{/NEGVPaymentMenthodsSet}" itemPress="onSelectNonGV" >
+    							<g:items>
+        							<g:GridListItem type="Active" highlight="Success">
+            							<VBox class="sapUiSmallMargin">
+            								
+                						<Title text="{PaymentMethodName}" />
+										<Text text="{PaymentMethod}" />
+                						
+                                        
+            							</VBox>
+        							</g:GridListItem>
+    							</g:items>
+								</g:GridList>
+
+
+							</VBox>
+						</content>
+					</Panel>
+					<Panel visible="{= ${ShowPaymentSection>/selectedMode} === 'Cash' }">
+						<content>
+							<VBox class="sapUiSmallMargin">
+								<Input id="cash" placeholder="Enter Amount "  maxLength="16" class="sapUiSmallMarginBottom" />
+								<Button  text="Submit" press="onCashSubmit"/>
+							</VBox>
+							
+						</content>
+					</Panel>
+					
+					<Panel visible="{= ${ShowPaymentSection>/selectedMode} === 'Forex' }">
+						<content>
+							<VBox class="sapUiSmallMargin">
+								<l:HorizontalLayout class="sapUiContentPadding equalColumns" width="100%">
+									<!--<FlexBox class="columns" justifyContent="SpaceBetween" alignItems="Center" direction="Row" wrap="Wrap">-->
+									<GenericTile frameType="OneByHalf" press="onPressCurrency" header="USD" class="customTile1">
+										<TileContent >
+											<Button type="Transparent" icon="sap-icon://currency"/>
+										</TileContent>
+									</GenericTile>
+									<GenericTile header="CAD" frameType="OneByHalf" press="onPressCurrency" class="customTile1">
+										<TileContent>
+											<Button type="Transparent" icon="sap-icon://currency"/>
+										</TileContent>
+									</GenericTile>
+									<GenericTile header="INR" frameType="OneByHalf" press="onPressCurrency" class="customTile1">
+										<TileContent>
+											<Button type="Transparent" icon="sap-icon://currency"/>
+										</TileContent>
+									</GenericTile>
+								</l:HorizontalLayout>
+								<l:HorizontalLayout class="sapUiContentPadding equalColumns" width="100%">
+									<!--</FlexBox>-->
+									<!--<FlexBox class="columns" justifyContent="SpaceBetween" alignItems="Center" direction="Row" wrap="Wrap">-->
+									<GenericTile header="AUD" frameType="OneByHalf" press="onPressCurrency" class="customTile1">
+										<TileContent>
+											<Button type="Transparent" icon="sap-icon://currency"/>
+										</TileContent>
+									</GenericTile>
+									<GenericTile header="PKR" frameType="OneByHalf" press="onPressCurrency" class="customTile1">
+										<TileContent>
+											<Button type="Transparent" icon="sap-icon://currency"/>
+										</TileContent>
+									</GenericTile>
+									<GenericTile header="CNY" frameType="OneByHalf" press="onPressCurrency" class="customTile1">
+										<TileContent>
+											<Button type="Transparent" icon="sap-icon://currency"/>
+										</TileContent>
+									</GenericTile>
+									<!--</FlexBox>-->
+								</l:HorizontalLayout>
+								<Panel visible="{= ${ShowCurrencySection>/selectedMode} === 'CurrencyView' }">
+									<content>
+										<HBox>
+											<Label design="Bold" text="Exchange Rate :"/>
+											<Text/>
+										</HBox>
+										<Input placeholder="Enter Amount" liveChange="onExpiryDateChange" maxLength="5"/>
+										<Button text="Submit" press="onSubmit"/>
+									</content>
+								</Panel>
+							</VBox>
+						</content>
+					</Panel>
+				</VBox>
+			</HBox>
+		</ScrollContainer>
+		</content>
+		<!--<beginButton>-->
+		<!--	<Button text="Print Transaction" press="onPressPaymentButton"/>-->
+		<!--	<Button text="Signature" press="OnSignaturePress"/>-->
+		<!--</beginButton>-->
+		<!--<endButton>-->
+		<!--	<Button text="Close" press="onPressClose"/>-->
+		<!--</endButton>-->
+		
+			<buttons>
+			<Button text="Print Transaction" type="Reject" press="onClear" class="cstmBtn"/>
+			<Button text="Signature" type="Emphasized" press="OnSignaturePress" class="cstmBtn"/>
+			<Button id="sbmtTrans" visible="false" text="Submit" type="Emphasized" press="onPressPaymentTest" class="cstmBtn"/>
+			<Button text="Close" type="Emphasized" press="onPressClose" class="cstmBtn"/>
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>
