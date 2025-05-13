@@ -42,6 +42,7 @@ sap.ui.define([
                 this.paymentId = 0;
                 this.sourceIdCounter = 0;
                 this.aPaymentEntries = [];
+                this.aReturnSerialsNo =[];
 
             },
             validateLoggedInUser: function(){
@@ -101,8 +102,8 @@ sap.ui.define([
                         that.cashierID = oData.results[0] ? oData.results[0].EmployeeId : "";
                         that.cashierName = oData.results[0] ? oData.results[0].EmployeeName : "";
                         that._oDialogCashier.close();
-                        // that.getView().byId("cashier").setCount(oData.results[0].EmployeeName);
-                        // that.getView().byId("tranNumber").setCount(oData.results[0].TransactionId);
+                        that.getView().byId("cashier").setCount(oData.results[0].EmployeeName);
+                       // that.getView().byId("tranNumber").setCount(oData.results[0].TransactionId);
                         that.getView().byId("page").setVisible(true);
                         
                     },
@@ -319,11 +320,19 @@ sap.ui.define([
                 var that = this;
                 var data = this.getView().getModel("custAddModel").getData();
                 data.add_type = "";
+                var shippingDate = data.shippingDate;
+                var shipingInst = data.ShippingInst;
+                var shipingMethod = data.ShippingMethod;
                 delete (data.shippingDate);
                 delete (data.ShippingInst);
                 delete (data.ShippingMethod);
                 this.customerModel.create("/ZER_CUST_MASTERSet", data, {
                     success: function (oData) {
+                        that.getView().getModel("custAddModel").setData({});
+                        that.getView().getModel("custAddModel").setData(oData);
+                        that.getView().getModel("custAddModel").setProperty("/shippingDate",shippingDate);
+                        that.getView().getModel("custAddModel").setProperty("/ShippingInst",shipingInst);
+                        that.getView().getModel("custAddModel").setProperty("/ShippingMethod",shipingMethod);
                         that._oDialogCust.close();
                         sap.m.MessageToast.show("Customer Update Successfully");
                     },
@@ -419,6 +428,328 @@ sap.ui.define([
                     sap.ui.getCore().byId("cardNumberlbl").setRequired(false);
                 }
     
+            },
+            onSearch: function(){
+                var tranNumber = this.getView().byId("salesTrans").getValue();
+                this.getTransactionData();
+            },
+            getTransactionData: function(oEvent){
+                var that = this;
+                var tranNumber = "";
+                if(oEvent){
+                    tranNumber = oEvent.getParameter("value");
+                }
+                else{
+                    tranNumber = this.getView().byId("salesTrans").getValue();
+                }
+                
+                this.oModel.read("/SalesTransactionHeaderSet('" + tranNumber +"')", {
+                    urlParameters: {
+                        "$expand": "ToItems,ToDiscounts,ToPayments,ToSerials"
+                    },
+                   
+                    success: function (oData) {
+                        that.getView().byId("tranNumber").setCount(tranNumber);
+                        that.getView().byId("msgStrp").setText(oData.CustomerName + " - " + oData.ContactNo);
+                        that.getView().byId("customer").setCount(oData.CustomerName);
+                        that.getView().byId("msgStrp").setVisible(true);
+                        //that.getView().byId("totalPrice").setText("0.00");
+                       var oModel = new JSONModel();
+                       oModel.setData({"items" : []});
+                       var aItems = oData.ToItems.results;
+                       var aSerials = oData.ToSerials.results;
+                       var mSerialsByItem = {};
+                        aSerials.forEach(serial => {
+                            var itemId = serial.TransactionItem;
+                            if (!mSerialsByItem[itemId]) {
+                                    mSerialsByItem[itemId] = [];
+                                }
+                            mSerialsByItem[itemId].push(serial);
+                        });
+
+                        aItems.forEach(item => {
+                            var itemId = item.TransactionItem;
+                            item.returnQty = 0;
+                            item.returnAmount = 0;
+                            item.returnDiscount =0;
+                            item.returnTotalAmount =0;
+                            item.returnVATAmount =0;
+                            var serialsForItem = mSerialsByItem[itemId] || [];
+                        
+                            // Add boolean as string
+                            item.SerialNumbers = serialsForItem.length > 0 ? true : false;
+                        
+                            // Optionally add the actual serials array for UI use
+                            item.SerialList = serialsForItem;
+                        });
+
+                       oModel.setData({"items" : aItems});
+                       oModel.refresh();
+                       
+                       that.getView().setModel(oModel,"ProductModel");
+                    },
+                    error: function (oError) {
+                            sap.m.MessageBox.show(
+                                JSON.parse(oError.responseText).error.message.value, {
+                                icon: sap.m.MessageBox.Icon.Error,
+                                title: "Error",
+                                actions: ["OK", "CANCEL"],
+                                onClose: function (oAction) {
+
+                                }
+                            }
+                            );
+                        
+                        
+                    }
+                });
+            },
+            formatSerialNumText: function(value){
+                if(value){
+                    return "Yes";
+                }
+                else{
+                    return "No" ;
+                }
+
+            },
+            enabledSerialNumber: function(value){
+                if(value){
+                    return true;
+                }
+                else{
+                    return false ;
+                }
+            },
+            onScan: function(){
+                var that = this;
+                BarcodeScanner.scan(
+                    function(mResult){
+
+                        if(!mResult.cancelled){
+                            that.getTransactionData(mResult.text);
+                        }
+                    },
+                    function(Error){
+                        window.alert("Scanning Failed :" + Error)
+                    }
+                )
+
+            },
+            openSerialNumbers: function(oEvent){
+                var that=this;
+                var selIndex = oEvent.getSource().getId().split("--")[2].split("-")[1];
+                var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
+                var matId = selIndexData.Material;
+                var serNumModel = new JSONModel();
+                serNumModel.setData({"serNumber" : []});
+                if (!that._oDialogSerNumber) {
+                    Fragment.load({
+                        name: "com.eros.returnsales.fragment.serialNumber",
+                        controller: that
+                    }).then(function (oFragment) {
+                        that._oDialogSerNumber = oFragment;
+                        serNumModel.setData({"serNumber" : selIndexData.SerialList});
+                        that.getView().addDependent(that._oDialogSerNumber);
+                        sap.ui.getCore().byId("matID").setText(matId);
+                        that.getView().setModel(serNumModel,"SerialModel")
+                        that._oDialogSerNumber.open();
+                    }.bind(that));
+                } else {
+                    sap.ui.getCore().byId("matID").setText(matId);
+                    serNumModel.setData({"serNumber" : selIndexData.SerialList});
+                    that.getView().setModel(serNumModel,"SerialModel")
+                    that._oDialogSerNumber.open();
+                }
+            },
+            onCloseReturnSerial: function(){
+                this._oDialogSerNumber.close();
+            },
+            onPressSaveReturnSerial: function(){
+                var selectedItems = sap.ui.getCore().byId("serialList").getSelectedItems();
+                if(selectedItems.length > 0){
+                    for(var count=0; count < selectedItems.length; count++){
+                        var sPath = selectedItems[count].oBindingContexts.SerialModel.sPath;
+                        var dataObj = this.getView().getModel("SerialModel").getObject(sPath);
+                        this.aReturnSerialsNo.push(dataObj);
+                    }
+                    this._oDialogSerNumber.close();
+                }
+                else{
+                    this._oDialogSerNumber.close();
+                }
+                
+            },
+            onSubtract: function (oEvent) {
+                var selIndex = oEvent.getSource().getId().split("--")[2].split("-")[1];
+                var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
+                var actQuantity = selIndexData.Quantity;
+                var qtyValue = oEvent.getSource().getEventingParent().getItems()[1].getValue();
+                var iValue = parseInt(qtyValue, 10) || 0;
+                if (iValue > 0) {
+                    
+                    oEvent.getSource().getEventingParent().getItems()[1].setValue(iValue - 1);
+                    var retQty = oEvent.getSource().getEventingParent().getItems()[1].getValue();
+                   if ((parseInt(retQty) <= parseInt(actQuantity))) {
+                    this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                    this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                    var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
+                    var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
+                    var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
+                   // this.getView().getModel("ProductModel").getObject("/Product/" + selIndex).NetAmount= parseFloat(parseFloat(netAmount) + parseFloat(netDiscount)).toFixed(2);
+                    this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
+                    this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
+                    this.updateTotalPrice();
+                }
+                else {
+                        sap.m.MessageBox.show(
+                            "Entered Quantity should not be more than Actual Quantity", {
+                            icon: sap.m.MessageBox.Icon.Error,
+                            title: "Error",
+                            actions: ["OK"],
+                            onClose: function (oAction) {
+
+
+                            }
+                        }
+                        );
+
+                    }
+            }
+
+            },
+            onManualChangeQty: function (oEvent) {
+                var event = oEvent;
+                var qty = oEvent.getParameter("newValue");
+                var selIndex = oEvent.getSource().getParent().getId().split("--")[2].split("-")[1];
+                var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
+                var actQuantity = selIndexData.Quantity;
+
+               
+
+                if ((qty.toString() !== "0")) {
+                    if ((parseInt(qty) <= parseInt(actQuantity))) {
+                       
+                        var qtyValue = qty;
+                        var iValue = parseInt(qtyValue, 10) || 0;
+                        selIndexData.returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
+                        selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
+
+                        var netAmount = selIndexData.returnAmount;
+                        var netDiscount = selIndexData.returnDiscount
+                        var vatPercent = selIndexData.VatPercent
+                       // selIndexData.NetAmount= parseFloat(parseFloat(netAmount) + parseFloat(netDiscount)).toFixed(2);
+                        this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
+                        this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
+                        this.updateTotalPrice();
+                    }
+                    else {
+                        oEvent.getSource().setValue(0);
+                        sap.m.MessageBox.show(
+                            "Entered Quantity should not be more than Actual Quantity", {
+                            icon: sap.m.MessageBox.Icon.Error,
+                            title: "Error",
+                            actions: ["OK"],
+                            onClose: function (oAction) {
+
+
+                            }
+                        }
+                        );
+
+                    }
+                }
+                else {
+                    oEvent.getSource().setValue(0);
+                    sap.m.MessageBox.show(
+                        "Entered Quantity should not be zero", {
+                        icon: sap.m.MessageBox.Icon.Error,
+                        title: "Error",
+                        actions: ["OK"],
+                        onClose: function (oAction) {
+                            event.getSource().setValue(1);
+                            event.getSource().fireChange();
+                        }
+                    }
+                    );
+                }
+
+
+            },
+            onAddition: function (oEvent) {
+                var selIndex = oEvent.getSource().getId().split("--")[2].split("-")[1];
+                var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
+                var actQuantity = selIndexData.Quantity;
+                var qtyValue = oEvent.getSource().getEventingParent().getItems()[1].getValue();
+                var iValue = parseInt(qtyValue, 10) || 0;
+
+                 
+
+                oEvent.getSource().getEventingParent().getItems()[1].setValue(iValue + 1);
+                var retQty = oEvent.getSource().getEventingParent().getItems()[1].getValue();
+                if ((parseInt(retQty) <= parseInt(actQuantity))) {
+                
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+
+                var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
+                var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
+                var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
+               
+                this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
+                this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
+                this.updateTotalPrice();
+                 }
+                  else {
+                    oEvent.getSource().getEventingParent().getItems()[1].setValue(parseInt(retQty) - 1);
+                    sap.m.MessageBox.show(
+                        "Entered Quantity should not be zero", {
+                        icon: sap.m.MessageBox.Icon.Error,
+                        title: "Error",
+                        actions: ["OK"],
+                        onClose: function (oAction) {
+                            // event.getSource().setValue(1);
+                            // event.getSource().fireChange();
+                        }
+                    }
+                    );
+                }
+
+            },
+            calculateSalesAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
+                var netPrice = parseFloat(parseInt(parseFloat(netAmount).toFixed(2)) - parseInt(parseFloat(netDiscount).toFixed(2))).toFixed(2);
+                var vatAmount = parseFloat(parseInt(netPrice) * (parseInt(parseFloat(vatPercent).toFixed(2)) / 100)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(vatAmount) + parseFloat(netPrice);
+                this.getView().getModel("ProductModel").refresh();
+            },
+            calculateVATAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
+                var netPrice = parseFloat(parseInt(parseFloat(netAmount).toFixed(2)) - parseInt(parseFloat(netDiscount).toFixed(2))).toFixed(2);
+                var vatAmount = parseFloat(parseInt(netPrice) * (parseInt(parseFloat(vatPercent).toFixed(2)) / 100)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatAmount = vatAmount;
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnVATAmount = vatAmount;
+                this.getView().getModel("ProductModel").refresh();
+
+            },
+            updateTotalPrice: function(){
+                var productTblData = this.getView().getModel("ProductModel").getProperty("/items");
+                var totalPrice = 0;
+                var totalQty = 0;
+                var totalVAT = 0;
+                var totalDiscount=0;
+                var totalGross=0;
+                for (var count = 0; count < productTblData.length; count++) {
+                    totalPrice = parseFloat(parseFloat(totalPrice) + parseFloat(productTblData[count].returnTotalAmount)).toFixed(2);
+                    totalGross = parseFloat(parseFloat(totalGross) + parseFloat(productTblData[count].returnAmount)).toFixed(2)
+                    totalQty = totalQty + parseInt(productTblData[count].returnQty);
+                    totalVAT = parseFloat(parseFloat(totalVAT) + parseFloat(productTblData[count].returnVATAmount)).toFixed(2);
+                    totalDiscount = parseFloat(parseFloat(totalDiscount) + parseFloat(productTblData[count].returnDiscount)).toFixed(2)
+                }
+                this.getView().byId("saleAmount").setCount(totalPrice);
+                this.getView().byId("qty").setCount(totalQty);
+                this.getView().byId("vat").setCount(totalVAT);
+                this.getView().byId("gross").setCount(totalGross);
+                this.getView().byId("discount").setCount(totalDiscount);
+                //this.getView().byId("totalPrice").setText(totalPrice);
             }
         });
     });

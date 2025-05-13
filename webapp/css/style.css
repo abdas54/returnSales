@@ -89,3 +89,82 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
 .cstmHBox {
   display: contents !important;
 }
+
+
+.inputStyle .sapMInputBaseInner {
+ 
+  border: 0px solid #c2c7cb4a !important;
+  border-radius: 3px !important;
+  opacity: 1 !important;
+  font-size: 1rem !important;
+  height: 2.5rem !important;
+}
+
+.inputStyle .sapMInputBaseContentWrapper {
+  border-radius: 2px;
+  font-size: 1rem !important;
+  height: 2.5rem !important;
+  /* border: 1px solid #bfbfbf;  */
+}
+
+.inputStyle .sapMInputBaseIcon {
+  background: #fafafa !important;
+  font-size: 1rem !important;
+  height: 2.5rem !important;
+  box-sizing: border-box !important;
+  border: 1px solid black !important;
+}
+
+.inputStyle.sapMInputBaseIconPressed .sapMInputBaseIcon::before {
+  color: #062646 !important;
+  font-size: 1rem !important;
+  height: 2.5rem !important;
+}
+
+.inputStyle .sapMCbBg.sapMCbMarkChecked {
+  background-color: #062646;
+  border: solid .125rem #062646;
+  font-size: 1rem !important;
+  height: 2.5rem !important;
+}
+
+.inputStyle .sapMCbBg.sapMCbMarkChecked:before {
+  background-color: #062646 !important;
+  color: #fff !important;
+  font-size: 1rem !important;
+  height: 2.5rem !important;
+
+}
+
+.inputStyle .sapMRbSel .sapMRbBInn {
+  fill: #062646;
+  font-size: 1rem !important;
+  height: 2.5rem !important;
+}
+.sapUiTableHeaderDataCell .sapMLabel, .sapMListTbl .sapMColumnHeader .sapMLabel {
+  font-size: 1rem !important;
+}
+
+.sapUiSizeCompact .sapMSLITitle, .sapUiSizeCompact .sapMSLITitleOnly {
+  font-size: 1rem !important;
+}
+.sapMSFI[type='search'] {
+  font-size: 1rem !important;
+}
+.sapMInputBaseInner {
+  font-size: 1rem !important;
+}
+.sapUiSizeCompact .sapMSFF {
+  height: 2rem !important;
+ 
+}
+.sapMLabel {
+  color: black !important;
+  font-size: 1rem !important;
+  font-family: sans-serif !important;
+ 
+}
+.sapUiSizeCompact .sapMSlt {
+  height: 2.5rem !important;
+}
+

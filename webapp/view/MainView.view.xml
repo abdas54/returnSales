@@ -4,60 +4,135 @@
    <Page id="page" title="{i18n>title}" enableScrolling="false" showHeader="false" >
 		
 		<content>
+		<HBox alignItems="Stretch" width="100%" class="cstmHBox">
+				<IconTabBar class="cstmHBox" expandable="false">
+					<items>
+						<IconTabFilter id="tranNumber" class="sapUiSmallMarginEnd" design="Horizontal" icon="sap-icon://documents" iconColor="Positive" count=""
+							text="Transaction Number" key="Ok"/>
+						<IconTabSeparator/>
+						<IconTabFilter id="cashier" design="Horizontal" icon="sap-icon://employee-lookup" iconColor="Critical" count="" text="Cashier" key="Heavy"/>
+						<IconTabSeparator/>
+						<IconTabFilter id="customer" design="Horizontal" icon="sap-icon://customer" iconColor="Critical" count="" text="Customer" key="Overweight"/>
+						<IconTabSeparator/>
+						<IconTabFilter id="qty" design="Horizontal" icon="sap-icon://collections-management" iconColor="Critical" count="" text="Quantity" key="qty"/>
+						<IconTabSeparator icon="sap-icon://open-command-field"/>
+						<IconTabFilter id="gross" design="Horizontal" icon="sap-icon://money-bills" iconColor="Critical" count="" text="Gross" key="gross"/>
+						<IconTabSeparator icon="sap-icon://open-command-field"/>
+						<IconTabFilter id="discount" design="Horizontal" icon="sap-icon://activate" iconColor="Critical" count="" text="Discount" key="discount"/>
+						<IconTabSeparator icon="sap-icon://open-command-field"/>
+						<IconTabFilter id="vat" design="Horizontal" icon="sap-icon://add-activity" iconColor="Critical" count="" text="VAT" key="vat"/>
+						<IconTabSeparator icon="sap-icon://open-command-field"/>
+						<IconTabFilter id="saleAmount" showAll="true" count="" text="AED" key="All"/>
+						<IconTabSeparator/>
+						<IconTabFilter design="Horizontal" icon="sap-icon://print" iconColor="Critical" key="print"/>
+					</items>
+				</IconTabBar>
+			</HBox>
 			<HBox width="100%">
            
 				<VBox width="80%" height="60%">
-                 <HBox class="sapUiSmallMarginTop sapUiSmallMarginBegin">
-                <Input class="sapUiSmallMarginBegin" id="amount"  placeholder="Enter Sales Transacation Number">
+                 <HBox class="sapUiSmallMarginTop">
+                <Input class="inputStyle sapUiSmallMarginBeginEnd" width="98%" id="salesTrans" change="getTransactionData" placeholder="Enter Sales Transacation Number">
                 <layoutData>
-								<FlexItemData growFactor="1"/>
+								<FlexItemData growFactor="2"/>
 							</layoutData>
 				</Input>
-                <Button class="sapUiSmallMarginBegin" text="Search" type="Transparent" />
+				<Button class="sapUiSmallMarginEnd" type="Transparent"  icon="sap-icon://qr-code" press="onScan" >
+				</Button>
+                <Button class="cstmBtn " press="onSearch" text="Search" type="Transparent" />
                 </HBox>
+				<HBox>
+						<MessageStrip id="msgStrp" visible="false"
+				type="Success"
+				showIcon="true"
+				class=" sapUiSmallMarginBeginEnd sapUiSmallMarginTop">
+			</MessageStrip>
+				</HBox>
                 <ScrollContainer class="sapUiSmallMarginTop sapUiSmallMarginBegin" horizontal="false" vertical="true">
-						<Table id="idProductsTable" headerText="Item List" items="{ProductModel>/Product}" mode="MultiSelect"  sticky="ColumnHeaders"
+						<Table id="idProductsTable"  items="{ProductModel>/items}" mode="MultiSelect"  sticky="ColumnHeaders"
 							itemPress="onProductRowPress">
+							<headerToolbar>
+			<OverflowToolbar>
+				<content>
+					<Title text="Item List" level="H2"/>
+					<ToolbarSpacer />
+					<!-- <Text text="Total Return Price :" />
+					<Text id="totalPrice" class="sapUiSmallMarginBegin" text="0.00" /> -->
+				</content>
+			</OverflowToolbar>
+		</headerToolbar>
 							<columns>
-								
-								<Column width="6em">
+								<Column width="3em">
+									<Text text="Seq."/>
+								</Column>
+								<Column width="4em">
 									<Text text="Model No."/>
 								</Column>
-								<Column width="6em" hAlign="Center">
-									<Text text="Act Quantity"/>
+								
+								<Column width="5em" hAlign="Center">
+									<Text text="Unit Price"/>
 								</Column>
-								<Column width="5em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+								
+								<!-- <Column width="5em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
 									<Text text="Gross"/>
 								</Column>
 								<Column width="5em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
-									<Text text="Discount/Surcharge"/>
-								</Column>
+									<Text text="Discount"/>
+								</Column> -->
+							
 								<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
-									<Text text="Ext Price"/>
+									<Text text="Total Amount"/>
 								</Column>
-									<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
-									<Text text="Return Qty"/>
+							
+								<Column width="4em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+									<Text text="Serial No."/>
 								</Column>
-									<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
-									<Text text="Reason Codes"/>
+									<Column width="3em" hAlign="Center">
+									<Text text="Quantity"/>
 								</Column>
-									<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
-									<Text text="Store List"/>
+								<Column width="4em" hAlign="Center">
+									<Text text="Return Qty."/>
+								</Column>
+							
+									<Column width="4em" hAlign="Center">
+									<Text text="Return Price"/>
+								</Column>
+						
+									<Column width="4em" hAlign="Center">
+									<Text text="Return Discount"/>
 								</Column>
 								
+									<Column width="4em" hAlign="Center">
+									<Text text="Return VAT"/>
+								</Column>
+								
+									<Column width="4em" hAlign="Center">
+									<Text text="Return Total"/>
+								</Column>
+							
 							</columns>
 							<items>
 								<ColumnListItem type="Active">
 									<cells>
+										<Text text="{ProductModel>TransactionItem}" />
+										<ObjectIdentifier title="{ProductModel>Material}" text="{ProductModel>Material}"/>
 										
-										<ObjectIdentifier title="{ProductModel>Itemcode}" text="{ProductModel>Description}"/>
-										<Text/>
-                                        <Text/>
-                                        <Text/>
-                                        <Text/>
-										<Input/>
-										<Button />
-										<Button />
+                                        <Text text="{ProductModel>UnitPrice}"/>
+                                        <!-- <Text text="{ProductModel>GrossAmount}"/>
+                                        <Text text="{ProductModel>Discount}"/> -->
+										<Text text="{ProductModel>SaleAmount}"/>
+										<Button press="openSerialNumbers" text="{parts: [{path: 'ProductModel>SerialNumbers'}], formatter: '.formatSerialNumText'}"
+										enabled="{parts: [{path: 'ProductModel>SerialNumbers'}], formatter: '.enabledSerialNumber'}"/>
+										<Text text="{ProductModel>Quantity}"/>
+										<HBox>
+											<Button type="Transparent" icon="sap-icon://sys-minus" press="onSubtract"/>
+											<Input  type="Number" value="{ProductModel>returnQty}" change="onManualChangeQty"/>
+											<Button type="Transparent" icon="sap-icon://add" press="onAddition"/>
+										</HBox>
+										<Text text="{ProductModel>returnAmount}"/>
+										<Text text="{ProductModel>returnDiscount}"/>
+										<Text text="{ProductModel>returnVATAmount}"/>
+										<Text text="{ProductModel>returnTotalAmount}"/>
 										
 									</cells>
 								</ColumnListItem>
@@ -69,11 +144,7 @@
 				<VBox width="20%">
 					<l:VerticalLayout class="sapUiContentPadding equalColumns" width="100%">
 						
-						<GenericTile header="CUSTOMER" frameType="OneByHalf" press="onPressCustData" class="customTile">
-							<TileContent>
-								<Button type="Transparent" icon="sap-icon://customer"/>
-							</TileContent>
-						</GenericTile>
+						
                         <GenericTile header="RETURN" frameType="OneByHalf" press="onPressReturn" class="customTile">
 							<TileContent>
 								<Button type="Transparent" icon="sap-icon://undo"/>

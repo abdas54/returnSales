@@ -1,0 +1,36 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:f="sap.f.cards"
+	xmlns:l="sap.ui.layout" xmlns:g="sap.f">
+	<Dialog title="Select Serial Numbers" contentHeight="400px" contentWidth="1000px">
+		<content>
+		<VBox>
+		<HBox>
+			<Label design="Bold" text="Material:" class="sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+			<Text id="matID"  class="sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop"/>
+			
+		</HBox>
+
+				<g:GridList id="serialList" width="80%" items="{SerialModel>/serNumber}" class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop" mode="MultiSelect">
+    							<g:items>
+        							<g:GridListItem type="Active" highlight="Success">
+            							<VBox class="sapUiSmallMargin">
+            								
+                						<Title text="{SerialModel>SerialId}" />
+                						<Text text="{SerialModel>SerialNo}" />
+                                        
+            							</VBox>
+        							</g:GridListItem>
+    							</g:items>
+								</g:GridList>
+		</VBox>
+			
+			
+		</content>
+		
+		
+			<buttons>
+			
+			<Button text="Save" type="Emphasized" press="onPressSaveReturnSerial" class="cstmBtn"/>
+			<Button text="Close" type="Emphasized" press="onCloseReturnSerial" class="cstmBtn"/>
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>
