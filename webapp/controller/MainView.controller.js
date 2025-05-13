@@ -450,9 +450,9 @@ sap.ui.define([
                    
                     success: function (oData) {
                         that.getView().byId("tranNumber").setCount(tranNumber);
-                        that.getView().byId("msgStrp").setText(oData.CustomerName + " - " + oData.ContactNo);
+                       
                         that.getView().byId("customer").setCount(oData.CustomerName);
-                        that.getView().byId("msgStrp").setVisible(true);
+                        
                         //that.getView().byId("totalPrice").setText("0.00");
                        var oModel = new JSONModel();
                        oModel.setData({"items" : []});

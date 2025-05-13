@@ -42,11 +42,7 @@
                 <Button class="cstmBtn " press="onSearch" text="Search" type="Transparent" />
                 </HBox>
 				<HBox>
-						<MessageStrip id="msgStrp" visible="false"
-				type="Success"
-				showIcon="true"
-				class=" sapUiSmallMarginBeginEnd sapUiSmallMarginTop">
-			</MessageStrip>
+				
 				</HBox>
                 <ScrollContainer class="sapUiSmallMarginTop sapUiSmallMarginBegin" horizontal="false" vertical="true">
 						<Table id="idProductsTable"  items="{ProductModel>/items}" mode="MultiSelect"  sticky="ColumnHeaders"
