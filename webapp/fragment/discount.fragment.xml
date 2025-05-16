@@ -1,0 +1,133 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:f="sap.f.cards"
+	xmlns:l="sap.ui.layout" xmlns:g="sap.f">
+	<Dialog title="Manual Discount" contentHeight="400px" contentWidth="1000px">
+		<content>
+			
+			
+			<HBox>
+				<VBox class="sapUiSmallMargin">
+					<List items="{DiscountModel>/DiscountList}" mode="None" class="roundedList">
+						<StandardListItem title="{DiscountModel>option}" type="Active" press="onDiscountSectSelected"/>
+					</List>
+				</VBox>
+				<VBox width="700px">
+					<Panel visible="{= ${ShowDiscountSection>/selectedMode} === 'Item List' }">
+						<content>
+							<VBox >
+							<g:GridList items="{SelectedItemsModel>/items}"   itemPress="holdDiscountItem">
+    							<g:items>
+        							<g:GridListItem type="Active" highlight="Success">
+            							<VBox class="sapUiSmallMargin">
+            								
+                						<Title text="{SelectedItemsModel>Material}" />
+                						<Text text="{SelectedItemsModel>Material}" />
+                                        
+            							</VBox>
+        							</g:GridListItem>
+    							</g:items>
+								</g:GridList>
+							</VBox>
+						</content>
+					</Panel>
+                    <Panel visible="{= ${ShowDiscountSection>/selectedMode} === 'Discounts Condition' }">
+						<content>
+							<VBox >
+							<g:GridList items="{/ManualDiscountsSet}"  itemPress="holdDiscountCondition" >
+    							<g:items>
+        							<g:GridListItem type="Active" highlight="Success">
+            							<VBox class="sapUiSmallMargin">
+            								
+                						<Title text="{ConditionType}" />
+                						<Text text="{ConditionName}" />
+                                        
+            							</VBox>
+        							</g:GridListItem>
+    							</g:items>
+								</g:GridList>
+							</VBox>
+						</content>
+					</Panel>
+                     <Panel visible="{= ${ShowDiscountSection>/selectedMode} === 'Reason Type' }">
+						<content>
+							<VBox >
+							<g:GridList items="{/DiscountReasonsSet}"  itemPress="holdReasonType">
+    							<g:items>
+        							<g:GridListItem type="Active" highlight="Success">
+            							<VBox class="sapUiSmallMargin">
+            								
+                						<Title text="{Reason}" />
+                						
+                                        
+            							</VBox>
+        							</g:GridListItem>
+    							</g:items>
+								</g:GridList>
+							</VBox>
+						</content>
+					</Panel>
+                     <Panel visible="{= ${ShowDiscountSection>/selectedMode} === 'Authority' }">
+						<content>
+							<VBox >
+							<g:GridList items="{/ApprovalAuthoritySet}"   itemPress="holdAuthority">
+    							<g:items>
+        							<g:GridListItem type="Active" highlight="Success">
+            							<VBox class="sapUiSmallMargin">
+            								
+                						<Title text="{Authority}" />
+                						
+                                        
+            							</VBox>
+        							</g:GridListItem>
+    							</g:items>
+								</g:GridList>
+							</VBox>
+						</content>
+					</Panel>
+                    <Panel visible="{= ${ShowDiscountSection>/selectedMode} === 'Amount' }">
+						<content>
+							<VBox >
+							<Input  id="discountAmount" class="inputStyle sapUiSmallMarginBottom" placeholder="Enter Discount Amount" change="holdDiscountAmount"></Input>	
+							</VBox>
+						</content>
+					</Panel>
+                    <Panel visible="{= ${ShowDiscountSection>/selectedMode} === 'View All Records' }">
+						<content>
+							<VBox >
+							 <Table mode="Delete"  delete="onDeleteManualDiscount1" items="{discountModelTable>/entries}" >
+                                    <columns>
+                                        <Column width="8rem"><Text text="Material" /></Column>
+                                        <Column width="8rem"><Text text="Condition" /></Column>
+                                        <Column width="8rem"><Text text="Reason" /></Column>
+                                        <Column width="6rem"><Text text="Amount" /></Column>
+                                        <Column width="5rem"><Text text="Authority" /></Column>
+                                    </columns>
+                                <items>
+                                    <ColumnListItem>
+                                        <cells>
+                                            <ObjectIdentifier title="{discountModelTable>ItemCode}" text="{discountModelTable>ItemDescription}"/>
+                                            <!-- <Text text="{discountModelTbl>ItemCode} - {discountModelTbl>ItemDescription}" /> -->
+                                            <ObjectIdentifier title="{discountModelTable>Type}" text="{discountModelTable>ConditionName}"/>
+                                            <!-- <Text text="{discountModelTbl>Type} - {discountModelTbl>ConditionName}" /> -->
+                                            <Text text="{discountModelTable>Reason}" />
+                                            <Text text="{discountModelTable>Amount}" />
+                                            <Text text="{discountModelTable>Authority}" />
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+							</VBox>
+						</content>
+					</Panel>
+					
+				</VBox>
+			</HBox>
+		</content>
+		
+		
+			<buttons>
+			
+			<Button text="Apply Discount" type="Emphasized" press="onApplyManualDiscount1" class="cstmBtn"/>
+			<Button text="Close" type="Emphasized" press="onCloseManualDiscount1" class="cstmBtn"/>
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>

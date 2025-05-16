@@ -147,17 +147,13 @@
 
 							</TileContent>
 						</GenericTile>
-						<GenericTile header="DISCOUNT" frameType="OneByHalf" press="onPressReturn" class="customTile">
+						<GenericTile header="DISCOUNT" frameType="OneByHalf" press="onPressDiscount" class="customTile">
 							<TileContent>
 								<Button type="Transparent" icon="sap-icon://undo"/>
 
 							</TileContent>
 						</GenericTile>
-						<GenericTile header="PAYMENTS" frameType="OneByHalf" press="onPressPayments1" class="customTile">
-							<TileContent>
-								<Button type="Transparent" icon="sap-icon://money-bills"/>
-							</TileContent>
-						</GenericTile>
+					
 						
 					</l:VerticalLayout>
 				</VBox>

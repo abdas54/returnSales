@@ -1,14 +1,14 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/model/json/JSONModel",
-	"sap/m/MessageToast",
-	"sap/ui/core/Fragment",
+    "sap/m/MessageToast",
+    "sap/ui/core/Fragment",
     "sap/m/MessageBox"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller,JSONModel,MessageToast,Fragment,MessageBox) {
+    function (Controller, JSONModel, MessageToast, Fragment, MessageBox) {
         "use strict";
         var that;
         return Controller.extend("com.eros.returnsales.controller.MainView", {
@@ -19,10 +19,10 @@ sap.ui.define([
                 this.oModel = this.getOwnerComponent().getModel();
 
                 this.customerAddressModel = new JSONModel();
-                this.getView().setModel(this.customerAddressModel,"custAddModel");
+                this.getView().setModel(this.customerAddressModel, "custAddModel");
 
                 this.customerModel = this.getOwnerComponent().getModel("customerService");
-                this.getView().setModel(this.customerModel,"CustomerModel");
+                this.getView().setModel(this.customerModel, "CustomerModel");
 
                 var showSection = new JSONModel();
                 showSection.setData({
@@ -33,28 +33,37 @@ sap.ui.define([
                 var model3 = new JSONModel();
                 model3.setData({
                     "selectedMode": "Cash",
-                    "cardPaymentMode" : 0
+                    "cardPaymentMode": 0
                 });
                 this.getView().setModel(model3, "ShowPaymentSection");
+
+                var model4 = new JSONModel();
+                model4.setData({
+                    "selectedMode": "Item List",
+
+                });
+                this.getView().setModel(model4, "ShowDiscountSection");
+
                 this.validateLoggedInUser();
                 this.shippingMethod = "";
                 this.paymentEntSourceCounter = 0;
                 this.paymentId = 0;
                 this.sourceIdCounter = 0;
                 this.aPaymentEntries = [];
-                this.aReturnSerialsNo =[];
+                this.aReturnSerialsNo = [];
+                this.aEntries1 = [];
 
             },
-            validateLoggedInUser: function(){
+            validateLoggedInUser: function () {
                 var that = this;
                 this.oModel.read("/StoreIDSet", {
-                    success: function(oData) {
+                    success: function (oData) {
                         that.storeID = oData.results[0] ? oData.results[0].Store : "";
                         that.plantID = oData.results[0] ? oData.results[0].Plant : "";
                         that.onPressPayments();
                     },
-                    error: function(oError) {
-                        sap.m.MessageBox.show(JSON.parse(oError.responseText).error.message.value,{
+                    error: function (oError) {
+                        sap.m.MessageBox.show(JSON.parse(oError.responseText).error.message.value, {
                             icon: sap.m.MessageBox.Icon.Error,
                             title: "Error",
                             actions: [MessageBox.Action.OK],
@@ -67,12 +76,12 @@ sap.ui.define([
                     }
                 });
             },
-            onPressPayments: function() {
+            onPressPayments: function () {
                 if (!this._oDialogCashier) {
                     Fragment.load({
                         name: "com.eros.returnsales.fragment.cashier",
                         controller: this
-                    }).then(function(oFragment) {
+                    }).then(function (oFragment) {
                         this._oDialogCashier = oFragment;
                         this.getView().addDependent(this._oDialogCashier);
                         this._oDialogCashier.open();
@@ -81,69 +90,69 @@ sap.ui.define([
                     this._oDialogCashier.open();
                 }
             },
-            fnCloseCashier: function() {
+            fnCloseCashier: function () {
                 this._oDialogCashier.close();
             },
-            fnValidateCashier: function(oEvent) {
+            fnValidateCashier: function (oEvent) {
                 var that = this;
                 that.getView().byId("page").setVisible(false);
                 var empId = oEvent.getSource().getParent().getContent()[0].getItems()[0].getContent()[1].getValue();
                 var pwd = oEvent.getSource().getParent().getContent()[0].getItems()[0].getContent()[3].getValue();
-                var aFilters=[];
-                
+                var aFilters = [];
+
                 aFilters.push(new sap.ui.model.Filter("Etype", sap.ui.model.FilterOperator.EQ, "C"));
                 aFilters.push(new sap.ui.model.Filter("EmployeeId", sap.ui.model.FilterOperator.EQ, empId));
                 aFilters.push(new sap.ui.model.Filter("SecretCode", sap.ui.model.FilterOperator.EQ, pwd));
-                  aFilters.push(new sap.ui.model.Filter("Generate", sap.ui.model.FilterOperator.EQ, "N"));
-               //EmployeeSet?$filter=Etype eq 'C' and EmployeeId eq '112' and SecretCode eq 'Abc#91234'
-                
+                aFilters.push(new sap.ui.model.Filter("Generate", sap.ui.model.FilterOperator.EQ, "N"));
+                //EmployeeSet?$filter=Etype eq 'C' and EmployeeId eq '112' and SecretCode eq 'Abc#91234'
+
                 this.oModel.read("/EmployeeSet", {
                     filters: aFilters,
-                    success: function(oData) {
+                    success: function (oData) {
                         that.cashierID = oData.results[0] ? oData.results[0].EmployeeId : "";
                         that.cashierName = oData.results[0] ? oData.results[0].EmployeeName : "";
                         that._oDialogCashier.close();
                         that.getView().byId("cashier").setCount(oData.results[0].EmployeeName);
-                       // that.getView().byId("tranNumber").setCount(oData.results[0].TransactionId);
+                        // that.getView().byId("tranNumber").setCount(oData.results[0].TransactionId);
                         that.getView().byId("page").setVisible(true);
-                        
+
                     },
-                    error: function(oError) {
+                    error: function (oError) {
                         that.getView().byId("page").setVisible(false);
-                        if(JSON.parse(oError.responseText).error.code === "CASHIER_CHECK"){
+                        if (JSON.parse(oError.responseText).error.code === "CASHIER_CHECK") {
                             sap.m.MessageBox.show(
                                 JSON.parse(oError.responseText).error.message.value, {
-                                    icon: sap.m.MessageBox.Icon.Error,
-                                    title: "Cashier Validation",
-                                    actions: ["OK", "CANCEL"],
-                                    onClose: function(oAction) {
-                                        
-                                    }
+                                icon: sap.m.MessageBox.Icon.Error,
+                                title: "Cashier Validation",
+                                actions: ["OK", "CANCEL"],
+                                onClose: function (oAction) {
+
                                 }
+                            }
                             );
                         }
-                        else{
+                        else {
                             sap.m.MessageBox.show(
                                 JSON.parse(oError.responseText).error.message.value, {
-                                    icon: sap.m.MessageBox.Icon.Error,
-                                    title: "Error",
-                                    actions: ["OK", "CANCEL"],
-                                    onClose: function(oAction) {
-                                        
-                                    }
+                                icon: sap.m.MessageBox.Icon.Error,
+                                title: "Error",
+                                actions: ["OK", "CANCEL"],
+                                onClose: function (oAction) {
+
                                 }
+                            }
                             );
                         }
                         console.error("Error", oError);
                     }
                 });
-               
+
             },
-            onPressCustData: function() {
+            onPressCustData: function () {
                 var oModel = new sap.ui.model.json.JSONModel({
                     customerData: [{
                         option: "Basic Information"
-                    },  {
+                    }, {
                         option: "Customer Address"
                     }]
                 });
@@ -152,7 +161,7 @@ sap.ui.define([
                     Fragment.load({
                         name: "com.eros.returnsales.fragment.customer",
                         controller: this
-                    }).then(function(oFragment) {
+                    }).then(function (oFragment) {
                         this._oDialogCust = oFragment;
                         this.getView().addDependent(this._oDialogCust);
                         this._oDialogCust.open();
@@ -160,9 +169,9 @@ sap.ui.define([
                 } else {
                     this._oDialogCust.open();
                 }
-    
+
             },
-            onPressCustClose: function() {
+            onPressCustClose: function () {
                 this._oDialogCust.close();
             },
             onPressCustSaveClose: function () {
@@ -175,7 +184,7 @@ sap.ui.define([
                 var addressParts = [];
                 var customerName = [];
 
-             
+
 
                 if (custData.Name1) {
                     customerName.push(custData.Name1);
@@ -272,7 +281,7 @@ sap.ui.define([
             },
             validateCustomer: function () {
                 var bFlag;
-               
+
                 var custData = this.getView().getModel("custAddModel").getData();
                 var errorMessage = "";
 
@@ -331,9 +340,9 @@ sap.ui.define([
                     success: function (oData) {
                         that.getView().getModel("custAddModel").setData({});
                         that.getView().getModel("custAddModel").setData(oData);
-                        that.getView().getModel("custAddModel").setProperty("/shippingDate",shippingDate);
-                        that.getView().getModel("custAddModel").setProperty("/ShippingInst",shipingInst);
-                        that.getView().getModel("custAddModel").setProperty("/ShippingMethod",shipingMethod);
+                        that.getView().getModel("custAddModel").setProperty("/shippingDate", shippingDate);
+                        that.getView().getModel("custAddModel").setProperty("/ShippingInst", shipingInst);
+                        that.getView().getModel("custAddModel").setProperty("/ShippingMethod", shipingMethod);
                         that._oDialogCust.close();
                         sap.m.MessageToast.show("Customer Update Successfully");
                     },
@@ -344,7 +353,7 @@ sap.ui.define([
                 });
 
             },
-            onOptionSelect: function(oEvent) {
+            onOptionSelect: function (oEvent) {
                 var sSelectedOption = oEvent.getSource().getTitle();
                 var showSection = new JSONModel();
                 showSection.setData({
@@ -353,118 +362,120 @@ sap.ui.define([
                 this.getView().setModel(showSection, "ShowSection");
                 //	sap.m.MessageToast.show("Selected: " + sSelectedOption);
             },
-            onSearchNumber: function(oEvent){
-                var that=this;
+            onSearchNumber: function (oEvent) {
+                var that = this;
                 var searchNumber = oEvent.getParameter("query");
                 this.customerModel.read("/ZER_CUST_MASTERSet(Kunnr='',MobNo='" + searchNumber + "')", {
-                    success: function(oData) {
-                        if(oData){
-                             // this.getView().setModel(oModel1, "AddressModel");
+                    success: function (oData) {
+                        if (oData) {
+                            // this.getView().setModel(oModel1, "AddressModel");
                             that.getView().getModel("custAddModel").setData({});
                             that.getView().getModel("custAddModel").setData(oData);
                             that.getView().getModel("custAddModel").refresh();
-                            that.getView().getModel("ShowSection").setProperty("/selectedMode","Basic Information");
-    
-                            if((oData.home_add1 !== "") || (oData.home_add2 !== "")){
+                            that.getView().getModel("ShowSection").setProperty("/selectedMode", "Basic Information");
+
+                            if ((oData.home_add1 !== "") || (oData.home_add2 !== "")) {
                                 that.getView().byId("addressRbGrp").selectedIndex("1");
                             }
-                            else if((oData.off_add1 !== "") || (oData.off_add2 !== "")){
+                            else if ((oData.off_add1 !== "") || (oData.off_add2 !== "")) {
                                 that.getView().byId("addressRbGrp").selectedIndex("2");
-                               
+
                             }
-                            else if((oData.oth_Add1 !== "") || (oData.oth_Add2 !== "")){
+                            else if ((oData.oth_Add1 !== "") || (oData.oth_Add2 !== "")) {
                                 that.getView().byId("addressRbGrp").selectedIndex("3");
-                                
+
                             }
-                            else{
+                            else {
                                 that.getView().byId("addressRbGrp").selectedIndex("1");
                             }
-                            
-                            
+
+
                         }
-                        
+
                     },
-                    error: function(oError) {
-                        sap.m.MessageBox.show("Customer does not exist. Kindly add it",{
+                    error: function (oError) {
+                        sap.m.MessageBox.show("Customer does not exist. Kindly add it", {
                             icon: sap.m.MessageBox.Icon.Error,
                             title: "Error",
                             actions: [MessageBox.Action.OK],
                             onClose: function (oAction) {
                                 if (oAction === MessageBox.Action.OK) {
                                     that.getView().getModel("custAddModel").setData({});
-                                    that.getView().getModel("ShowSection").setProperty("/selectedMode","Basic Information");
+                                    that.getView().getModel("ShowSection").setProperty("/selectedMode", "Basic Information");
                                 }
                             }
                         });
                     }
                 });
             },
-            onSelectAddressType: function(oEvent){
-                if(oEvent.getParameter("selectedIndex") === 0){
+            onSelectAddressType: function (oEvent) {
+                if (oEvent.getParameter("selectedIndex") === 0) {
                     sap.ui.getCore().byId("homeSection").setVisible(true);
                     sap.ui.getCore().byId("workSection").setVisible(false);
                     sap.ui.getCore().byId("otherSection").setVisible(false);
                 }
-                if(oEvent.getParameter("selectedIndex") === 1){
+                if (oEvent.getParameter("selectedIndex") === 1) {
                     sap.ui.getCore().byId("homeSection").setVisible(false);
                     sap.ui.getCore().byId("workSection").setVisible(true);
                     sap.ui.getCore().byId("otherSection").setVisible(false);
                 }
-                if(oEvent.getParameter("selectedIndex") === 2){
+                if (oEvent.getParameter("selectedIndex") === 2) {
                     sap.ui.getCore().byId("homeSection").setVisible(false);
                     sap.ui.getCore().byId("workSection").setVisible(false);
                     sap.ui.getCore().byId("otherSection").setVisible(true);
                 }
             },
-            onCustomerTypeChange: function(oEvent){
-    
-                if(oEvent.getParameter("selectedItem").getProperty("key") === "2"){
+            onCustomerTypeChange: function (oEvent) {
+
+                if (oEvent.getParameter("selectedItem").getProperty("key") === "2") {
                     sap.ui.getCore().byId("cardTypelbl").setRequired(true);
                     sap.ui.getCore().byId("issuedBylbl").setRequired(true);
                     sap.ui.getCore().byId("cardNumberlbl").setRequired(true);
                 }
-                else{
+                else {
                     sap.ui.getCore().byId("cardTypelbl").setRequired(false);
                     sap.ui.getCore().byId("issuedBylbl").setRequired(false);
                     sap.ui.getCore().byId("cardNumberlbl").setRequired(false);
                 }
-    
+
             },
-            onSearch: function(){
+            onSearch: function () {
                 var tranNumber = this.getView().byId("salesTrans").getValue();
                 this.getTransactionData();
             },
-            getTransactionData: function(oEvent){
+            getTransactionData: function (oEvent) {
                 var that = this;
                 var tranNumber = "";
-                if(oEvent){
+                if (oEvent) {
                     tranNumber = oEvent.getParameter("value");
                 }
-                else{
+                else {
                     tranNumber = this.getView().byId("salesTrans").getValue();
                 }
-                
-                this.oModel.read("/SalesTransactionHeaderSet('" + tranNumber +"')", {
+
+                this.oModel.read("/SalesTransactionHeaderSet('" + tranNumber + "')", {
                     urlParameters: {
                         "$expand": "ToItems,ToDiscounts,ToPayments,ToSerials"
                     },
-                   
+
                     success: function (oData) {
+                        that.ToDiscounts = oData.ToDiscounts;
+                        that.ToPayments = oData.ToPayments;
+                        that.ToSerials = oData.ToSerials;
                         that.getView().byId("tranNumber").setCount(tranNumber);
-                       
                         that.getView().byId("customer").setCount(oData.CustomerName);
-                        
+
                         //that.getView().byId("totalPrice").setText("0.00");
-                       var oModel = new JSONModel();
-                       oModel.setData({"items" : []});
-                       var aItems = oData.ToItems.results;
-                       var aSerials = oData.ToSerials.results;
-                       var mSerialsByItem = {};
+                        var oModel = new JSONModel();
+                        oModel.setData({ "items": [] });
+                        var aItems = oData.ToItems.results;
+                        var aSerials = oData.ToSerials.results;
+                        var mSerialsByItem = {};
                         aSerials.forEach(serial => {
                             var itemId = serial.TransactionItem;
                             if (!mSerialsByItem[itemId]) {
-                                    mSerialsByItem[itemId] = [];
-                                }
+                                mSerialsByItem[itemId] = [];
+                            }
                             mSerialsByItem[itemId].push(serial);
                         });
 
@@ -472,114 +483,114 @@ sap.ui.define([
                             var itemId = item.TransactionItem;
                             item.returnQty = 0;
                             item.returnAmount = 0;
-                            item.returnDiscount =0;
-                            item.returnTotalAmount =0;
-                            item.returnVATAmount =0;
+                            item.returnDiscount = 0;
+                            item.returnTotalAmount = 0;
+                            item.returnVATAmount = 0;
                             var serialsForItem = mSerialsByItem[itemId] || [];
-                        
+
                             // Add boolean as string
                             item.SerialNumbers = serialsForItem.length > 0 ? true : false;
-                        
+
                             // Optionally add the actual serials array for UI use
                             item.SerialList = serialsForItem;
                         });
 
-                       oModel.setData({"items" : aItems});
-                       oModel.refresh();
-                       
-                       that.getView().setModel(oModel,"ProductModel");
+                        oModel.setData({ "items": aItems });
+                        oModel.refresh();
+
+                        that.getView().setModel(oModel, "ProductModel");
                     },
                     error: function (oError) {
-                            sap.m.MessageBox.show(
-                                JSON.parse(oError.responseText).error.message.value, {
-                                icon: sap.m.MessageBox.Icon.Error,
-                                title: "Error",
-                                actions: ["OK", "CANCEL"],
-                                onClose: function (oAction) {
+                        sap.m.MessageBox.show(
+                            JSON.parse(oError.responseText).error.message.value, {
+                            icon: sap.m.MessageBox.Icon.Error,
+                            title: "Error",
+                            actions: ["OK", "CANCEL"],
+                            onClose: function (oAction) {
 
-                                }
                             }
-                            );
-                        
-                        
+                        }
+                        );
+
+
                     }
                 });
             },
-            formatSerialNumText: function(value){
-                if(value){
+            formatSerialNumText: function (value) {
+                if (value) {
                     return "Yes";
                 }
-                else{
-                    return "No" ;
+                else {
+                    return "No";
                 }
 
             },
-            enabledSerialNumber: function(value){
-                if(value){
+            enabledSerialNumber: function (value) {
+                if (value) {
                     return true;
                 }
-                else{
-                    return false ;
+                else {
+                    return false;
                 }
             },
-            onScan: function(){
+            onScan: function () {
                 var that = this;
                 BarcodeScanner.scan(
-                    function(mResult){
+                    function (mResult) {
 
-                        if(!mResult.cancelled){
+                        if (!mResult.cancelled) {
                             that.getTransactionData(mResult.text);
                         }
                     },
-                    function(Error){
+                    function (Error) {
                         window.alert("Scanning Failed :" + Error)
                     }
                 )
 
             },
-            openSerialNumbers: function(oEvent){
-                var that=this;
+            openSerialNumbers: function (oEvent) {
+                var that = this;
                 var selIndex = oEvent.getSource().getId().split("--")[2].split("-")[1];
                 var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
                 var matId = selIndexData.Material;
                 var serNumModel = new JSONModel();
-                serNumModel.setData({"serNumber" : []});
+                serNumModel.setData({ "serNumber": [] });
                 if (!that._oDialogSerNumber) {
                     Fragment.load({
                         name: "com.eros.returnsales.fragment.serialNumber",
                         controller: that
                     }).then(function (oFragment) {
                         that._oDialogSerNumber = oFragment;
-                        serNumModel.setData({"serNumber" : selIndexData.SerialList});
+                        serNumModel.setData({ "serNumber": selIndexData.SerialList });
                         that.getView().addDependent(that._oDialogSerNumber);
                         sap.ui.getCore().byId("matID").setText(matId);
-                        that.getView().setModel(serNumModel,"SerialModel")
+                        that.getView().setModel(serNumModel, "SerialModel")
                         that._oDialogSerNumber.open();
                     }.bind(that));
                 } else {
                     sap.ui.getCore().byId("matID").setText(matId);
-                    serNumModel.setData({"serNumber" : selIndexData.SerialList});
-                    that.getView().setModel(serNumModel,"SerialModel")
+                    serNumModel.setData({ "serNumber": selIndexData.SerialList });
+                    that.getView().setModel(serNumModel, "SerialModel")
                     that._oDialogSerNumber.open();
                 }
             },
-            onCloseReturnSerial: function(){
+            onCloseReturnSerial: function () {
                 this._oDialogSerNumber.close();
             },
-            onPressSaveReturnSerial: function(){
+            onPressSaveReturnSerial: function () {
                 var selectedItems = sap.ui.getCore().byId("serialList").getSelectedItems();
-                if(selectedItems.length > 0){
-                    for(var count=0; count < selectedItems.length; count++){
+                if (selectedItems.length > 0) {
+                    for (var count = 0; count < selectedItems.length; count++) {
                         var sPath = selectedItems[count].oBindingContexts.SerialModel.sPath;
                         var dataObj = this.getView().getModel("SerialModel").getObject(sPath);
                         this.aReturnSerialsNo.push(dataObj);
                     }
                     this._oDialogSerNumber.close();
                 }
-                else{
+                else {
                     this._oDialogSerNumber.close();
                 }
-                
+
             },
             onSubtract: function (oEvent) {
                 var selIndex = oEvent.getSource().getId().split("--")[2].split("-")[1];
@@ -588,21 +599,21 @@ sap.ui.define([
                 var qtyValue = oEvent.getSource().getEventingParent().getItems()[1].getValue();
                 var iValue = parseInt(qtyValue, 10) || 0;
                 if (iValue > 0) {
-                    
+
                     oEvent.getSource().getEventingParent().getItems()[1].setValue(iValue - 1);
                     var retQty = oEvent.getSource().getEventingParent().getItems()[1].getValue();
-                   if ((parseInt(retQty) <= parseInt(actQuantity))) {
-                    this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                    this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                    var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
-                    var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
-                    var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
-                   // this.getView().getModel("ProductModel").getObject("/Product/" + selIndex).NetAmount= parseFloat(parseFloat(netAmount) + parseFloat(netDiscount)).toFixed(2);
-                    this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
-                    this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
-                    this.updateTotalPrice();
-                }
-                else {
+                    if ((parseInt(retQty) <= parseInt(actQuantity))) {
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                        var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
+                        var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
+                        var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
+                        // this.getView().getModel("ProductModel").getObject("/Product/" + selIndex).NetAmount= parseFloat(parseFloat(netAmount) + parseFloat(netDiscount)).toFixed(2);
+                        this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
+                        this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
+                        this.updateTotalPrice();
+                    }
+                    else {
                         sap.m.MessageBox.show(
                             "Entered Quantity should not be more than Actual Quantity", {
                             icon: sap.m.MessageBox.Icon.Error,
@@ -616,7 +627,7 @@ sap.ui.define([
                         );
 
                     }
-            }
+                }
 
             },
             onManualChangeQty: function (oEvent) {
@@ -626,11 +637,11 @@ sap.ui.define([
                 var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
                 var actQuantity = selIndexData.Quantity;
 
-               
+
 
                 if ((qty.toString() !== "0")) {
                     if ((parseInt(qty) <= parseInt(actQuantity))) {
-                       
+
                         var qtyValue = qty;
                         var iValue = parseInt(qtyValue, 10) || 0;
                         selIndexData.returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
@@ -639,7 +650,7 @@ sap.ui.define([
                         var netAmount = selIndexData.returnAmount;
                         var netDiscount = selIndexData.returnDiscount
                         var vatPercent = selIndexData.VatPercent
-                       // selIndexData.NetAmount= parseFloat(parseFloat(netAmount) + parseFloat(netDiscount)).toFixed(2);
+                        // selIndexData.NetAmount= parseFloat(parseFloat(netAmount) + parseFloat(netDiscount)).toFixed(2);
                         this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
                         this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
                         this.updateTotalPrice();
@@ -684,24 +695,24 @@ sap.ui.define([
                 var qtyValue = oEvent.getSource().getEventingParent().getItems()[1].getValue();
                 var iValue = parseInt(qtyValue, 10) || 0;
 
-                 
+
 
                 oEvent.getSource().getEventingParent().getItems()[1].setValue(iValue + 1);
                 var retQty = oEvent.getSource().getEventingParent().getItems()[1].getValue();
                 if ((parseInt(retQty) <= parseInt(actQuantity))) {
-                
-                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
 
-                var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
-                var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
-                var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
-               
-                this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
-                this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
-                this.updateTotalPrice();
-                 }
-                  else {
+                    this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                    this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+
+                    var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
+                    var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
+                    var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
+
+                    this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
+                    this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
+                    this.updateTotalPrice();
+                }
+                else {
                     oEvent.getSource().getEventingParent().getItems()[1].setValue(parseInt(retQty) - 1);
                     sap.m.MessageBox.show(
                         "Entered Quantity should not be zero", {
@@ -731,13 +742,13 @@ sap.ui.define([
                 this.getView().getModel("ProductModel").refresh();
 
             },
-            updateTotalPrice: function(){
+            updateTotalPrice: function () {
                 var productTblData = this.getView().getModel("ProductModel").getProperty("/items");
                 var totalPrice = 0;
                 var totalQty = 0;
                 var totalVAT = 0;
-                var totalDiscount=0;
-                var totalGross=0;
+                var totalDiscount = 0;
+                var totalGross = 0;
                 for (var count = 0; count < productTblData.length; count++) {
                     totalPrice = parseFloat(parseFloat(totalPrice) + parseFloat(productTblData[count].returnTotalAmount)).toFixed(2);
                     totalGross = parseFloat(parseFloat(totalGross) + parseFloat(productTblData[count].returnAmount)).toFixed(2)
@@ -751,6 +762,315 @@ sap.ui.define([
                 this.getView().byId("gross").setCount(totalGross);
                 this.getView().byId("discount").setCount(totalDiscount);
                 //this.getView().byId("totalPrice").setText(totalPrice);
-            }
+            },
+            onPressDiscount: function () {
+                if (this.getView().byId("idProductsTable").getSelectedItems().length > 0) {
+                    var oTable = this.byId("idProductsTable");
+                    var aSelectedContexts = oTable.getSelectedContexts();
+                    var aSelectedData = aSelectedContexts.map(function (oContext) {
+                        return oContext.getObject();
+                    });
+
+                    // Create a JSON model with selected data
+                    var oSelectedItemsModel = new sap.ui.model.json.JSONModel();
+                    oSelectedItemsModel.setData({ items: [] });
+                    oSelectedItemsModel.setData({ items: aSelectedData });
+                    this.getView().setModel(oSelectedItemsModel, "SelectedItemsModel");
+
+
+                    var oModel = new sap.ui.model.json.JSONModel({
+                        DiscountList: [{
+                            option: "Item List"
+                        }, {
+                            option: "Discounts Condition"
+                        }, {
+                            option: "Reason Type"
+                        }, {
+                            option: "Authority"
+                        }, {
+                            option: "Amount"
+                        }, {
+                            option: "View All Records"
+                        }]
+                    });
+                    this.getView().setModel(oModel, "DiscountModel");
+                    var oModel1 = new sap.ui.model.json.JSONModel();
+                    this.getView().setModel(oModel1, "DiscountValue");
+                    if (!this._oDialogDiscoun1) {
+                        Fragment.load({
+                            name: "com.eros.returnsales.fragment.discount",
+                            controller: this
+                        }).then(function (oFragment) {
+                            this._oDialogDiscoun1 = oFragment;
+                            this._oDialogDiscoun1.setModel(oSelectedItemsModel, "SelectedItemsModel");
+                            this.getView().addDependent(this._oDialogDiscoun1);
+                            this.getView().getModel("SelectedItemsModel").refresh();
+                            this._oDialogDiscoun1.open();
+
+                        }.bind(this));
+                    } else {
+                        this._oDialogDiscoun1.setModel(oSelectedItemsModel, "SelectedItemsModel");
+                        this.getView().getModel("SelectedItemsModel").refresh();
+                        this._oDialogDiscoun1.open();
+
+                    }
+                } else {
+                    MessageBox.error("Kindly select the item for Return");
+                }
+            },
+            onDiscountSectSelected: function (oEvent) {
+                var sSelectedOption = oEvent.getSource().getTitle();
+                var showSection = new JSONModel();
+                showSection.setData({
+                    "selectedMode": sSelectedOption,
+
+                });
+                this.getView().setModel(showSection, "ShowDiscountSection");
+
+                if (sSelectedOption === "View All Records") {
+                    this.addDiscount();
+                }
+            },
+            holdDiscountItem: function (oEvent) {
+                var itemCode = oEvent.getParameter("listItem").getBindingContext("SelectedItemsModel").getObject().Material;
+                var itemDesc = oEvent.getParameter("listItem").getBindingContext("SelectedItemsModel").getObject().Material;
+                var transactionItem = oEvent.getParameter("listItem").getBindingContext("SelectedItemsModel").getObject().TransactionItem;
+                var transactionId = oEvent.getParameter("listItem").getBindingContext("SelectedItemsModel").getObject().TransactionId;
+                this.getView().getModel("DiscountValue").setProperty("/ItemCode", itemCode);
+                this.getView().getModel("DiscountValue").setProperty("/ItemDesc", itemDesc);
+                this.getView().getModel("DiscountValue").setProperty("/TransactionItem", transactionItem);
+                this.getView().getModel("DiscountValue").setProperty("/TransactionId", transactionId);
+                this.getView().getModel("ShowDiscountSection").setProperty("/selectedMode", "Discounts Condition");
+            },
+            holdDiscountCondition: function (oEvent) {
+                var conditionType = oEvent.getParameter("listItem").getBindingContext().getObject().ConditionType;
+                var conditionName = oEvent.getParameter("listItem").getBindingContext().getObject().ConditionName;
+                this.getView().getModel("DiscountValue").setProperty("/ConditionType", conditionType);
+                this.getView().getModel("DiscountValue").setProperty("/ConditionName", conditionName);
+                this.getView().getModel("ShowDiscountSection").setProperty("/selectedMode", "Reason Type");
+            },
+            holdReasonType: function (oEvent) {
+                var reason = oEvent.getParameter("listItem").getBindingContext().getObject().Reason;
+                this.getView().getModel("DiscountValue").setProperty("/Reason", reason);
+                this.getView().getModel("ShowDiscountSection").setProperty("/selectedMode", "Authority");
+            },
+            holdAuthority: function (oEvent) {
+                var authority = oEvent.getParameter("listItem").getBindingContext().getObject().Authority;
+                this.getView().getModel("DiscountValue").setProperty("/Authority", authority);
+                this.getView().getModel("ShowDiscountSection").setProperty("/selectedMode", "Amount");
+            },
+            holdDiscountAmount: function (oEvent) {
+                var discAmount = oEvent.getParameter("value");
+                this.getView().getModel("DiscountValue").setProperty("/DiscAmount", discAmount);
+                this.addDiscount();
+                this.getView().getModel("ShowDiscountSection").setProperty("/selectedMode", "View All Records");
+                sap.ui.getCore().byId("discountAmount").setValue("");
+
+
+            },
+            addDiscount: function () {
+                var duplicate = false;
+                var discountData = this.getView().getModel("DiscountValue").getData();
+                if (this.aEntries1.length > 0) {
+
+                    for (var count = 0; count < this.aEntries1.length; count++) {
+                        if (this.aEntries1[count].ItemCode === discountData.ItemCode && this.aEntries1[count].Type === discountData.ConditionType) {
+                            duplicate = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!duplicate) {
+                    if (discountData.ItemCode && discountData.ConditionType) {
+                        this.aEntries1.push({
+                            ItemCode: discountData.ItemCode,
+                            ItemDescription: discountData.ItemDesc,
+                            Reason: discountData.Reason,
+                            Type: discountData.ConditionType,
+                            Amount: discountData.DiscAmount,
+                            Authority: discountData.Authority,
+                            ConditionName: discountData.ConditionName,
+                            DiscountType: "M",
+                            TransactionItem: discountData.TransactionItem,
+                            TransactionId: discountData.TransactionId
+
+                        });
+                    }
+                }
+                else {
+                    MessageBox.error("Same Discount has been already applied. Kindly Delete the existing record to add new Discount");
+                }
+
+                var oModel1 = new sap.ui.model.json.JSONModel();
+                oModel1.setData({ "entries": this.aEntries1 });
+                this.getView().setModel(oModel1, "discountModelTable");
+
+                this.getView().getModel("DiscountValue").setProperty("/ItemCode", "");
+                this.getView().getModel("DiscountValue").setProperty("/ItemDesc", "");
+                this.getView().getModel("DiscountValue").setProperty("/ConditionType", "");
+                this.getView().getModel("DiscountValue").setProperty("/ConditionName", "");
+                this.getView().getModel("DiscountValue").setProperty("/DiscAmount", "");
+                this.getView().getModel("DiscountValue").setProperty("/Authority", "");
+                this.getView().getModel("DiscountValue").setProperty("/Reason", "");
+                this.getView().getModel("DiscountValue").setProperty("/TransactionItem", "");
+                this.getView().getModel("DiscountValue").setProperty("/TransactionId", "");
+                this.getView().getModel("DiscountValue").refresh();
+            },
+            onCloseManualDiscount1: function () {
+                this._oDialogDiscoun1.close();
+            },
+            onApplyManualDiscount1: function () {
+                var discountTblData = this.getView().getModel("discountModelTable").getProperty("/entries");
+                var productTblData = this.getView().getModel("ProductModel").getProperty("/items");
+
+                for (var count = 0; count < productTblData.length; count++) {
+
+                    for (var count1 = 0; count1 < discountTblData.length; count1++) {
+                        if (discountTblData[count1].ItemCode === productTblData[count].Material) {
+                            var bflag = false;
+                            for (var count2 = 0; count2 < this.ToDiscounts.results.length; count2++) {
+                                var dataObj = this.ToDiscounts.results;
+                                if (dataObj[count2].TransactionItem === discountTblData[count1].TransactionItem && dataObj[count2].ConditionName === discountTblData[count1].ConditionName) {
+                                    bflag = true;
+                                    break;
+                                }
+
+                            }
+                            if (!bflag) {
+                                this.ToDiscounts.results.push({
+                                    "TransactionId": discountTblData[count1].TransactionId,
+                                    "TransactionItem": discountTblData[count1].TransactionItem,
+                                    "ConditionAmount": "-" + discountTblData[count1].Amount,
+                                    "ConditionId": this.retrieveConditionId(discountTblData[count1].TransactionItem),
+                                    "ConditionName": discountTblData[count1].ConditionName,
+                                    "ConditionType": discountTblData[count1].Type,
+                                    "Currency": "AED",
+                                    "DiscountType": "M",
+                                    "ModifierType": "D",
+                                    "Remarks": discountTblData[count1].Reason,
+                                    "Authority": discountTblData[count1].Authority
+
+                                })
+                                this.updateProductTable(count, productTblData[count], discountTblData[count1]);
+                            }
+                        }
+                    }
+                }
+                this.onCloseManualDiscount1();
+
+            },
+            retrieveConditionId: function (sTransactionItem) {
+                var aDiscounts = this.ToDiscounts.results;
+                var aFiltered = aDiscounts.filter(function (oItem) {
+                    return oItem.TransactionItem === sTransactionItem;
+                });
+
+                if (aFiltered.length === 0) {
+                    // No existing conditions, start from '001'
+                    return "001";
+                }
+
+                // Get numeric values of ConditionId and find the max
+                var iMax = aFiltered.reduce(function (max, oItem) {
+                    var iCurrent = parseInt(oItem.ConditionId, 10);
+                    return iCurrent > max ? iCurrent : max;
+                }, 0);
+
+                // Increment and pad with leading zeros to 3 digits
+                var sNextConditionId = (iMax + 1).toString().padStart(3, '0');
+                return sNextConditionId;
+            },
+            updateProductTable: function (count, productTblData, discountTblData) {
+                var selIndex = count;
+                var updatedNetAmount = "";
+                var retQty = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnQty;
+                var updateDiscount = parseFloat(parseFloat(productTblData.returnDiscount).toFixed(2) - parseFloat(discountTblData.Amount).toFixed(2)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = updateDiscount;
+
+                updatedNetAmount = parseFloat(productTblData.UnitPrice).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(updatedNetAmount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(updateDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+
+                var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
+                var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
+                var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
+
+                this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
+                this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
+                this.updateTotalPrice();
+
+
+                this.getView().getModel("ProductModel").refresh();
+         
+
+
+            },
+             onDeleteManualDiscount1: function (oEvent) {
+
+                var bflag = false;
+                var oModel = this.getView().getModel("discountModelTable"); // Get the JSON model
+                var aEntries = oModel.getProperty("/entries"); // Get the array from the model
+                var oItem = oEvent.getParameter("listItem");
+                var oContext = oItem.getBindingContext("discountModelTable");
+                var dataObj = oModel.getObject(oContext.sPath);
+                var iIndex = oContext.getPath().split("/").pop(); // Extract index
+                var matchProdTableIndex = -1;
+                var matchDiscTableIndex = -1;
+                aEntries.splice(iIndex, 1);
+                oModel.refresh();
+                var productTblData = this.getView().getModel("ProductModel").getProperty("/items");
+                for (var count = 0; count < productTblData.length; count++) {
+                    var discountData = this.ToDiscounts.results;
+                    for (var count2 = 0; count2 < discountData.length; count2++) {
+
+                        if (dataObj.TransactionItem === discountData[count2].TransactionItem && dataObj.ConditionName === discountData[count2].ConditionName && dataObj.DiscountType === "M") {
+                            bflag = true;
+                            matchProdTableIndex = count;
+                            matchDiscTableIndex = count2;
+                            break;
+                        }
+                    }
+                }
+                if (bflag) {
+                    this.removeManualDiscount(this.ToDiscounts.results[matchDiscTableIndex].TransactionItem, dataObj);
+                    this.ToDiscounts.results.splice(matchDiscTableIndex, 1);
+                }
+
+            },
+             removeManualDiscount: function (transactItem, discountTblData) {
+                var productTablData = this.getView().getModel("ProductModel").getProperty("/items");
+                 var lineItem = 0;
+                for (var count = 0; count < productTablData.length; count++) {
+                    if(transactItem === productTablData[count].TransactionItem){
+                        lineItem = count;
+                        break;                   
+                     }
+                }
+                var selIndex = count;
+                var updatedNetAmount = "";
+                var retQty = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnQty;
+                var updateDiscount = parseFloat(parseFloat(productTablData[selIndex].returnDiscount) + parseFloat(discountTblData.Amount)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = updateDiscount;
+
+             
+                updatedNetAmount = parseFloat(productTablData[selIndex].UnitPrice).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(updatedNetAmount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(updateDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                 
+                var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
+                var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
+                var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
+
+                this.calculateVATAmount(netAmount, netDiscount, vatPercent, selIndex);
+                this.calculateSalesAmount(netAmount, netDiscount, vatPercent, selIndex);
+                this.updateTotalPrice();
+
+
+                this.getView().getModel("ProductModel").refresh();
+                
+                this.getView().getModel("ProductModel").refresh();
+             }
+                
         });
     });
