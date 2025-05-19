@@ -459,6 +459,7 @@ sap.ui.define([
                     },
 
                     success: function (oData) {
+                        that.mainData = oData;
                         that.ToDiscounts = oData.ToDiscounts;
                         that.ToPayments = oData.ToPayments;
                         that.ToSerials = oData.ToSerials;
@@ -482,10 +483,11 @@ sap.ui.define([
                         aItems.forEach(item => {
                             var itemId = item.TransactionItem;
                             item.returnQty = 0;
-                            item.returnAmount = 0;
-                            item.returnDiscount = 0;
-                            item.returnTotalAmount = 0;
-                            item.returnVATAmount = 0;
+                            item.returnAmount = "0.00";
+                            item.returnDiscount = "0.00";
+                            item.returnTotalAmount = "0.00";
+                            item.returnVATAmount = "0.00";
+                            item.returnUnitDiscount = item.UnitDiscount;
                             var serialsForItem = mSerialsByItem[itemId] || [];
 
                             // Add boolean as string
@@ -499,6 +501,9 @@ sap.ui.define([
                         oModel.refresh();
 
                         that.getView().setModel(oModel, "ProductModel");
+                        if(that.getView().getModel("discountModelTable")){
+                            that.getView().getModel("discountModelTable").setProperty("/entries",[]);
+                        }
                     },
                     error: function (oError) {
                         sap.m.MessageBox.show(
@@ -604,7 +609,24 @@ sap.ui.define([
                     var retQty = oEvent.getSource().getEventingParent().getItems()[1].getValue();
                     if ((parseInt(retQty) <= parseInt(actQuantity))) {
                         this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                         var returnDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount;
+                        if(retQty !==  "0"){
+                         if(returnDiscount == "0.00" ){
+                                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                            }
+                            else{
+                                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.returnUnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                            }
+                        }
+                         else{
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnUnitDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).UnitDiscount;
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = "0.00";
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = "0.00";
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnVATAmount = "0.00";
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = "0.00";
+
+                    }
+                        //this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
                         var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
                         var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
                         var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
@@ -645,7 +667,14 @@ sap.ui.define([
                         var qtyValue = qty;
                         var iValue = parseInt(qtyValue, 10) || 0;
                         selIndexData.returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
+                         var returnDiscount = selIndexData.returnDiscount
+                            if(returnDiscount == "0.00" ){
                         selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
+                            }
+                        else{
+                        selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.returnDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
+                        }
+                        //selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
 
                         var netAmount = selIndexData.returnAmount;
                         var netDiscount = selIndexData.returnDiscount
@@ -702,7 +731,23 @@ sap.ui.define([
                 if ((parseInt(retQty) <= parseInt(actQuantity))) {
 
                     this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                    this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                    var returnDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount;
+                    if(retQty !== "0"){
+                    if(returnDiscount == "0.00" ){
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                    }
+                    else{
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.returnUnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                    }
+                    }
+                    else{
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnUnitDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).UnitDiscount;
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = "0.00";
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = "0.00";
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnVATAmount = "0.00";
+                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = "0.00";
+
+                    }
 
                     var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
                     var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
@@ -732,6 +777,7 @@ sap.ui.define([
                 var netPrice = parseFloat(parseInt(parseFloat(netAmount).toFixed(2)) - parseInt(parseFloat(netDiscount).toFixed(2))).toFixed(2);
                 var vatAmount = parseFloat(parseInt(netPrice) * (parseInt(parseFloat(vatPercent).toFixed(2)) / 100)).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(vatAmount) + parseFloat(netPrice);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount).toFixed(2);
                 this.getView().getModel("ProductModel").refresh();
             },
             calculateVATAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
@@ -985,12 +1031,14 @@ sap.ui.define([
                 var selIndex = count;
                 var updatedNetAmount = "";
                 var retQty = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnQty;
-                var updateDiscount = parseFloat(parseFloat(productTblData.returnDiscount).toFixed(2) - parseFloat(discountTblData.Amount).toFixed(2)).toFixed(2);
+                var retUnitDiscount = parseFloat(parseFloat(productTblData.returnUnitDiscount) + parseFloat(discountTblData.Amount)).toFixed(2);
+                var updateDiscount = parseFloat(parseFloat(productTblData.returnDiscount) + parseFloat(discountTblData.Amount)).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = updateDiscount;
 
                 updatedNetAmount = parseFloat(productTblData.UnitPrice).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(updatedNetAmount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(updateDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(retUnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnUnitDiscount = retUnitDiscount;
 
                 var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
                 var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
@@ -1002,11 +1050,11 @@ sap.ui.define([
 
 
                 this.getView().getModel("ProductModel").refresh();
-         
+
 
 
             },
-             onDeleteManualDiscount1: function (oEvent) {
+            onDeleteManualDiscount1: function (oEvent) {
 
                 var bflag = false;
                 var oModel = this.getView().getModel("discountModelTable"); // Get the JSON model
@@ -1038,26 +1086,27 @@ sap.ui.define([
                 }
 
             },
-             removeManualDiscount: function (transactItem, discountTblData) {
+            removeManualDiscount: function (transactItem, discountTblData) {
                 var productTablData = this.getView().getModel("ProductModel").getProperty("/items");
-                 var lineItem = 0;
+                var lineItem = 0;
                 for (var count = 0; count < productTablData.length; count++) {
-                    if(transactItem === productTablData[count].TransactionItem){
+                    if (transactItem === productTablData[count].TransactionItem) {
                         lineItem = count;
-                        break;                   
-                     }
+                        break;
+                    }
                 }
                 var selIndex = count;
                 var updatedNetAmount = "";
                 var retQty = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnQty;
-                var updateDiscount = parseFloat(parseFloat(productTablData[selIndex].returnDiscount) + parseFloat(discountTblData.Amount)).toFixed(2);
+                var retUnitDiscount = parseFloat(parseFloat(productTablData[selIndex].returnUnitDiscount) - parseFloat(discountTblData.Amount)).toFixed(2);
+                var updateDiscount = parseFloat(parseFloat(productTablData[selIndex].returnDiscount) - parseFloat(discountTblData.Amount)).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = updateDiscount;
 
-             
+
                 updatedNetAmount = parseFloat(productTablData[selIndex].UnitPrice).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(updatedNetAmount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(updateDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                 
+                this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnUnitDiscount = retUnitDiscount;
                 var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
                 var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
                 var vatPercent = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatPercent
@@ -1068,9 +1117,174 @@ sap.ui.define([
 
 
                 this.getView().getModel("ProductModel").refresh();
-                
+
                 this.getView().getModel("ProductModel").refresh();
-             }
+            },
+            getTimeInISO8601Format: function () {
+                const now = new Date();
+                const hours = now.getHours();      // 24-hour format
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+
+                return `PT${hours}H${minutes}M${seconds}S`;
+            },
+            onPressReturn: function () {
                 
+                var qty = this.getView().byId("qty").getCount()
+                if (this.getView().byId("idProductsTable").getSelectedItems().length > 0 && parseInt(qty) > 0) {
+                var that = this;
+                var oPayload = {
+                    "TransactionId": "",
+                    "TransactionDate": new Date(),//new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+                    "ExpiryDate": new Date(),
+                    "TransactionTime": this.getTimeInISO8601Format(),//new Date().toTimeString().slice(0, 8).replace(/:/g, ''),
+                    "TransactionStatus": "1",
+                    "SalesOrder": "",
+                    "Flag": "",
+                    "Store": that.storeID,
+                    "Plant": that.plantID,
+                    "CashierId": that.cashierID,
+                    "CashierName": that.cashierName,
+                    "TransactionType": "2",
+                    "ShippingMethod": "",
+                    "GrossAmount": this.getView().byId("gross").getCount().toString(),
+                    "Discount": this.getView().byId("discount").getCount().toString().replace("-", ""),
+                    "VatAmount": this.getView().byId("vat").getCount().toString(),
+                    "SaleAmount": this.getView().byId("saleAmount").getCount().toString(),
+                    "Currency": "AED",
+                    "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(), // Required for Return Sales
+                    "CustomerName": this.getView().byId("customer").getCount(),
+                    "ContactNo": that.mainData.ContactNo,
+                    "EMail": that.mainData.EMail,
+                    "Address": that.mainData.Address,
+                    "ShippingInstruction": "",
+                    "DeliveryDate": new Date(),
+                    "ToItems": { "results": this.oPayloadTableItems() },
+                    "ToDiscounts": { "results": this.oPayloadTableDiscountItems() },
+                    "ToPayments": { "results": this.oPayloadPayments() },
+                    "ToSerials": { "results": this.oPayloadSerialNumber() },
+                    "Remarks": ""
+
+                }
+
+                this.oModel.create("/SalesTransactionHeaderSet", oPayload, {
+                    success: function (oData) {
+                        that.getView().byId("tranNumber").setCount(oData.TransactionId);
+                        that.getView().setBusy(false);
+                        	MessageBox.success("Return Sales Posted Successfully.", {
+				            onClose: function (sAction) {
+					             window.location.reload(true);
+				            }});
+                        
+                    },
+                    error: function (oError) {
+                        that.getView().setBusy(false);
+                        sap.m.MessageToast.show("Error");
+                    }
+                });
+            }
+            else{
+                MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
+            }
+
+            },
+            oPayloadPayments: function () {
+                this.aPaymentEntries = [];
+                this.aPaymentEntries.push({
+                    "TransactionId": "",
+                    "PaymentId": that.paymentId.toString(),
+                    "PaymentDate": new Date(),
+                    "Amount": this.getView().byId("saleAmount").getCount().toString(),
+                    "Currency": "AED",
+                    "PaymentMethod": "030",
+                    "PaymentMethodName": "Credit Memo",
+                    "Tid": "",
+                    "Mid": "",
+                    "CardType": "",
+                    "CardLabel": "",
+                    "CardNumber": "",
+                    "AuthorizationCode": "",
+                    "CardReceiptNo": "",
+                    "PaymentType": "CREDIT_NOTE",
+                    "VoucherNumber": "",
+                    "SourceId": ""
+
+                });
+                return this.aPaymentEntries;
+            },
+            oPayloadTableDiscountItems: function(){
+                return this.ToDiscounts.results;
+            },
+            oPayloadTableItems: function(){
+                var itemArr=[];
+                if (this.getView().byId("idProductsTable").getSelectedItems().length > 0) {
+                    var oTable = this.byId("idProductsTable");
+                    var aSelectedContexts = oTable.getSelectedContexts();
+                    var aSelectedData = aSelectedContexts.map(function (oContext) {
+                        return oContext.getObject();
+                    });
+                    var tableData = aSelectedContexts;
+             
+
+                for (var count = 0; count < tableData.length; count++) {
+                    var itemData = tableData[count].getModel().getObject(tableData[count].sPath);
+                    itemArr.push({
+                        "TransactionId": "",
+                        "TransactionItem": itemData.TransactionItem,
+                        "Plant": itemData.Plant,
+                        "Location": itemData.Location,
+                        "Material": itemData.Material,
+                        "Description": itemData.Description,
+                        "Quantity": itemData.returnQty,
+                        "Unit": "EA",
+                        "UnitPrice": itemData.UnitPrice,
+                        "UnitDiscount": itemData.UnitDiscount,
+                        "GrossAmount": itemData.returnAmount,
+                        "Discount": itemData.returnDiscount,
+                        "NetAmount": parseFloat(parseFloat(itemData.returnAmount) - parseFloat(itemData.returnDiscount)).toFixed(2),
+                        "VatPercent": itemData.VatPercent,
+                        "VatAmount": itemData.VatAmount,
+                        "SaleAmount": itemData.returnTotalAmount,
+                        "Currency": "AED",
+                        "FocItem": "",
+                        "SalesmanId": itemData.SalesmanId,
+                        "SalesmanName": itemData.SalesmanName,
+                        "OriginalTransactionId": itemData.TransactionId,
+                        "OriginalTransactionItem": itemData.TransactionItem
+                    })
+                }
+
+                return itemArr;
+            }
+            else{
+                MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
+            }
+            },
+            oPayloadSerialNumber: function(){
+                this.serialNumber =[];
+                if(this.aReturnSerialsNo.length > 0){
+
+                    for(var count=0; count < this.aReturnSerialsNo.length; count++){
+                        this.serialNumber.push({
+                             "TransactionId": "",
+                             "TransactionItem": "",
+                             "SerialId": this.aReturnSerialsNo[count].SerialId,
+                             "SerialNo": this.aReturnSerialsNo[count].SerialNo,
+                             "VoucherType": "",
+                             "VoucherStatus": "",
+                             "VoucherAmount": "0.00",
+                             "Currency": "",
+                             "ExpiryDate": new Date(),
+                             "OriginalTransactionId": this.aReturnSerialsNo[count].TransactionId,
+                             "OriginalTransactionItem": this.aReturnSerialsNo[count].TransactionItem
+                        })
+                    }
+                    return this.serialNumber;
+                }
+                else{
+                   return []
+                }
+            }
+
         });
     });

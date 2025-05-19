@@ -76,8 +76,11 @@
 									<Text text="Discount"/>
 								</Column> -->
 							
-								<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+								<!-- <Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
 									<Text text="Total Amount"/>
+								</Column> -->
+								<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+									<Text text="Unit Discount"/>
 								</Column>
 							
 								<Column width="4em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
@@ -111,12 +114,12 @@
 								<ColumnListItem type="Active">
 									<cells>
 										<Text text="{ProductModel>TransactionItem}" />
-										<ObjectIdentifier title="{ProductModel>Material}" text="{ProductModel>Material}"/>
+										<ObjectIdentifier title="{ProductModel>Material}" text="{ProductModel>Description}"/>
 										
                                         <Text text="{ProductModel>UnitPrice}"/>
                                         <!-- <Text text="{ProductModel>GrossAmount}"/>
                                         <Text text="{ProductModel>Discount}"/> -->
-										<Text text="{ProductModel>SaleAmount}"/>
+										<Text text="{ProductModel>returnUnitDiscount}"/>
 										<Button press="openSerialNumbers" text="{parts: [{path: 'ProductModel>SerialNumbers'}], formatter: '.formatSerialNumText'}"
 										enabled="{parts: [{path: 'ProductModel>SerialNumbers'}], formatter: '.enabledSerialNumber'}"/>
 										<Text text="{ProductModel>Quantity}"/>

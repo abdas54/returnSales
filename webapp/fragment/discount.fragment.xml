@@ -32,7 +32,7 @@
                     <Panel visible="{= ${ShowDiscountSection>/selectedMode} === 'Discounts Condition' }">
 						<content>
 							<VBox >
-							<g:GridList items="{/ManualDiscountsSet}"  itemPress="holdDiscountCondition" >
+							<g:GridList  items="{ path: '/ManualDiscountsSet', filters: [{ path: 'Returns', operator: 'EQ', value1: 'X' }] }" itemPress="holdDiscountCondition" >
     							<g:items>
         							<g:GridListItem type="Active" highlight="Success">
             							<VBox class="sapUiSmallMargin">
