@@ -86,7 +86,7 @@
                     <Panel visible="{= ${ShowDiscountSection>/selectedMode} === 'Amount' }">
 						<content>
 							<VBox >
-							<Input  id="discountAmount" class="inputStyle sapUiSmallMarginBottom" placeholder="Enter Discount Amount" change="holdDiscountAmount"></Input>	
+							<Input  id="discountAmount" type="Number" class="inputStyle sapUiSmallMarginBottom" placeholder="Enter Discount Amount" change="holdDiscountAmount"></Input>	
 							</VBox>
 						</content>
 					</Panel>
