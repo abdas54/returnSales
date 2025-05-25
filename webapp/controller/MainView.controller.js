@@ -1128,11 +1128,12 @@ sap.ui.define([
 
                 return `PT${hours}H${minutes}M${seconds}S`;
             },
-            onPressReturn: function () {
-                
+            onPressReturn: function (oEvent) {
+                var that = this;
+                this.oEvent = oEvent.getSource();
                 var qty = this.getView().byId("qty").getCount()
                 if (this.getView().byId("idProductsTable").getSelectedItems().length > 0 && parseInt(qty) > 0) {
-                var that = this;
+                this.oEvent.setPressEnabled(false);
                 var oPayload = {
                     "TransactionId": "",
                     "TransactionDate": new Date(),//new Date().toISOString().slice(0, 10).replace(/-/g, ''),
@@ -1171,13 +1172,15 @@ sap.ui.define([
                     success: function (oData) {
                         that.getView().byId("tranNumber").setCount(oData.TransactionId);
                         that.getView().setBusy(false);
-                        	MessageBox.success("Return Sales Posted Successfully.", {
+                            that.oEvent.setPressEnabled(true);
+                        	MessageBox.success("Item has been successfully returned.", {
 				            onClose: function (sAction) {
 					             window.location.reload(true);
 				            }});
                         
                     },
                     error: function (oError) {
+                        that.oEvent.setPressEnabled(true);
                         that.getView().setBusy(false);
                         sap.m.MessageToast.show("Error");
                     }
