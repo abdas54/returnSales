@@ -52,6 +52,7 @@ sap.ui.define([
                 this.aPaymentEntries = [];
                 this.aReturnSerialsNo = [];
                 this.aEntries1 = [];
+                this._serialStore = {};
 
             },
             validateLoggedInUser: function () {
@@ -501,8 +502,8 @@ sap.ui.define([
                         oModel.refresh();
 
                         that.getView().setModel(oModel, "ProductModel");
-                        if(that.getView().getModel("discountModelTable")){
-                            that.getView().getModel("discountModelTable").setProperty("/entries",[]);
+                        if (that.getView().getModel("discountModelTable")) {
+                            that.getView().getModel("discountModelTable").setProperty("/entries", []);
                         }
                     },
                     error: function (oError) {
@@ -554,47 +555,68 @@ sap.ui.define([
 
             },
             openSerialNumbers: function (oEvent) {
-                var that = this;
-                var selIndex = oEvent.getSource().getId().split("--")[2].split("-")[1];
-                var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
-                var matId = selIndexData.Material;
-                var serNumModel = new JSONModel();
-                serNumModel.setData({ "serNumber": [] });
-                if (!that._oDialogSerNumber) {
-                    Fragment.load({
-                        name: "com.eros.returnsales.fragment.serialNumber",
-                        controller: that
-                    }).then(function (oFragment) {
-                        that._oDialogSerNumber = oFragment;
-                        serNumModel.setData({ "serNumber": selIndexData.SerialList });
-                        that.getView().addDependent(that._oDialogSerNumber);
-                        sap.ui.getCore().byId("matID").setText(matId);
-                        that.getView().setModel(serNumModel, "SerialModel")
-                        that._oDialogSerNumber.open();
-                    }.bind(that));
-                } else {
-                    sap.ui.getCore().byId("matID").setText(matId);
-                    serNumModel.setData({ "serNumber": selIndexData.SerialList });
-                    that.getView().setModel(serNumModel, "SerialModel")
-                    that._oDialogSerNumber.open();
+                const oContext = oEvent.getSource().getBindingContext("ProductModel");
+                this._selectedItem = oContext.getObject();
+
+                const material = this._selectedItem.Material;
+
+                // Set Serial List model
+                const serialList = this._selectedItem.SerialList || [];
+                const oSerialModel = new sap.ui.model.json.JSONModel({ serNumber: serialList });
+                this.getView().setModel(oSerialModel, "SerialModel");
+
+                // Open dialog
+                if (!this._oSerialDialog) {
+                    this._oSerialDialog = sap.ui.xmlfragment("com.eros.returnsales.fragment.SerialNumber", this);
+                    this.getView().addDependent(this._oSerialDialog);
                 }
+
+                this._oSerialDialog.open();
+
+                // Delay to ensure GridList items are rendered
+                setTimeout(() => {
+                    const savedSerials = this._serialStore[material]?.serials || [];
+                    const oList = sap.ui.getCore().byId("serialList");
+                    const items = oList.getItems();
+
+                    items.forEach(item => {
+                        const ctx = item.getBindingContext("SerialModel");
+                        if (!ctx) return;
+
+                        const serialId = ctx.getProperty("SerialId");
+                        const isSelected = savedSerials.some(s => s.SerialId === serialId);
+                        item.setSelected(isSelected);
+                    });
+                }, 200);
             },
             onCloseReturnSerial: function () {
-                this._oDialogSerNumber.close();
+                this._oSerialDialog.close();
             },
             onPressSaveReturnSerial: function () {
-                var selectedItems = sap.ui.getCore().byId("serialList").getSelectedItems();
-                if (selectedItems.length > 0) {
-                    for (var count = 0; count < selectedItems.length; count++) {
-                        var sPath = selectedItems[count].oBindingContexts.SerialModel.sPath;
-                        var dataObj = this.getView().getModel("SerialModel").getObject(sPath);
-                        this.aReturnSerialsNo.push(dataObj);
-                    }
-                    this._oDialogSerNumber.close();
+                const oList = sap.ui.getCore().byId("serialList");
+                const aSelectedItems = oList.getSelectedItems();
+                const selectedSerials = aSelectedItems.map(item => {
+                    const oCtx = item.getBindingContext("SerialModel");
+                    return {
+                        SerialId: oCtx.getProperty("SerialId"),
+                        SerialNo: oCtx.getProperty("SerialNo")
+                    };
+                });
+
+                const returnQty = parseInt(this._selectedItem.returnQty || "0", 10);
+                if (selectedSerials.length !== returnQty) {
+                    sap.m.MessageBox.error(`Please select exactly ${returnQty} serial numbers.`);
+                    return;
                 }
-                else {
-                    this._oDialogSerNumber.close();
-                }
+
+                const material = this._selectedItem.Material;
+                this._serialStore[material] = {
+                    transactionItem: this._selectedItem.TransactionItem,
+                    serials: selectedSerials
+                };
+
+                sap.m.MessageToast.show("Serial numbers saved.");
+                this._oSerialDialog.close();
 
             },
             onSubtract: function (oEvent) {
@@ -609,23 +631,23 @@ sap.ui.define([
                     var retQty = oEvent.getSource().getEventingParent().getItems()[1].getValue();
                     if ((parseInt(retQty) <= parseInt(actQuantity))) {
                         this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                         var returnDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount;
-                        if(retQty !==  "0"){
-                         if(returnDiscount == "0.00" ){
+                        var returnDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount;
+                        if (retQty !== "0") {
+                            if (returnDiscount == "0.00") {
                                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
                             }
-                            else{
+                            else {
                                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.returnUnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
                             }
                         }
-                         else{
-                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnUnitDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).UnitDiscount;
-                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = "0.00";
-                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = "0.00";
-                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnVATAmount = "0.00";
-                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = "0.00";
+                        else {
+                            this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnUnitDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).UnitDiscount;
+                            this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = "0.00";
+                            this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = "0.00";
+                            this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnVATAmount = "0.00";
+                            this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = "0.00";
 
-                    }
+                        }
                         //this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
                         var netAmount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount;
                         var netDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount
@@ -667,12 +689,12 @@ sap.ui.define([
                         var qtyValue = qty;
                         var iValue = parseInt(qtyValue, 10) || 0;
                         selIndexData.returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
-                         var returnDiscount = selIndexData.returnDiscount
-                            if(returnDiscount == "0.00" ){
-                        selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
-                            }
-                        else{
-                        selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.returnDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
+                        var returnDiscount = selIndexData.returnDiscount
+                        if (returnDiscount == "0.00") {
+                            selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
+                        }
+                        else {
+                            selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.returnDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
                         }
                         //selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
 
@@ -732,15 +754,15 @@ sap.ui.define([
 
                     this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = parseFloat(parseFloat(selIndexData.UnitPrice).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
                     var returnDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount;
-                    if(retQty !== "0"){
-                    if(returnDiscount == "0.00" ){
-                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                    if (retQty !== "0") {
+                        if (returnDiscount == "0.00") {
+                            this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                        }
+                        else {
+                            this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.returnUnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
+                        }
                     }
-                    else{
-                        this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = parseFloat(parseFloat(selIndexData.returnUnitDiscount).toFixed(2) * parseFloat(retQty).toFixed(2)).toFixed(2);
-                    }
-                    }
-                    else{
+                    else {
                         this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnUnitDiscount = this.getView().getModel("ProductModel").getObject("/items/" + selIndex).UnitDiscount;
                         this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnDiscount = "0.00";
                         this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnAmount = "0.00";
@@ -1132,63 +1154,81 @@ sap.ui.define([
                 var that = this;
                 this.oEvent = oEvent.getSource();
                 var qty = this.getView().byId("qty").getCount()
-                if (this.getView().byId("idProductsTable").getSelectedItems().length > 0 && parseInt(qty) > 0) {
-                this.oEvent.setPressEnabled(false);
-                var oPayload = {
-                    "TransactionId": "",
-                    "TransactionDate": new Date(),//new Date().toISOString().slice(0, 10).replace(/-/g, ''),
-                    "ExpiryDate": new Date(),
-                    "TransactionTime": this.getTimeInISO8601Format(),//new Date().toTimeString().slice(0, 8).replace(/:/g, ''),
-                    "TransactionStatus": "1",
-                    "SalesOrder": "",
-                    "Flag": "",
-                    "Store": that.storeID,
-                    "Plant": that.plantID,
-                    "CashierId": that.cashierID,
-                    "CashierName": that.cashierName,
-                    "TransactionType": "2",
-                    "ShippingMethod": "",
-                    "GrossAmount": this.getView().byId("gross").getCount().toString(),
-                    "Discount": this.getView().byId("discount").getCount().toString().replace("-", ""),
-                    "VatAmount": this.getView().byId("vat").getCount().toString(),
-                    "SaleAmount": this.getView().byId("saleAmount").getCount().toString(),
-                    "Currency": "AED",
-                    "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(), // Required for Return Sales
-                    "CustomerName": this.getView().byId("customer").getCount(),
-                    "ContactNo": that.mainData.ContactNo,
-                    "EMail": that.mainData.EMail,
-                    "Address": that.mainData.Address,
-                    "ShippingInstruction": "",
-                    "DeliveryDate": new Date(),
-                    "ToItems": { "results": this.oPayloadTableItems() },
-                    "ToDiscounts": { "results": this.oPayloadTableDiscountItems() },
-                    "ToPayments": { "results": this.oPayloadPayments() },
-                    "ToSerials": { "results": this.oPayloadSerialNumber() },
-                    "Remarks": ""
+                let totalCount = 0;
 
+                for (const material in this._serialStore) {
+                    const serialList = this._serialStore[material].serials;
+                    totalCount += serialList.length;
+                }
+                if (!this.validateSerialStoreMaterials()) {
+                    return; 
                 }
 
-                this.oModel.create("/SalesTransactionHeaderSet", oPayload, {
-                    success: function (oData) {
-                        that.getView().byId("tranNumber").setCount(oData.TransactionId);
-                        that.getView().setBusy(false);
-                            that.oEvent.setPressEnabled(true);
-                        	MessageBox.success("Item has been successfully returned.", {
-				            onClose: function (sAction) {
-					             window.location.reload(true);
-				            }});
-                        
-                    },
-                    error: function (oError) {
-                        that.oEvent.setPressEnabled(true);
-                        that.getView().setBusy(false);
-                        sap.m.MessageToast.show("Error");
+                if (this.getView().byId("idProductsTable").getSelectedItems().length > 0 && parseInt(qty) > 0) {
+                    this.oEvent.setPressEnabled(false);
+                    var oPayload = {
+                        "TransactionId": "",
+                        "TransactionDate": new Date(),//new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+                        "ExpiryDate": new Date(),
+                        "TransactionTime": this.getTimeInISO8601Format(),//new Date().toTimeString().slice(0, 8).replace(/:/g, ''),
+                        "TransactionStatus": "1",
+                        "SalesOrder": "",
+                        "Flag": "",
+                        "Store": that.storeID,
+                        "Plant": that.plantID,
+                        "CashierId": that.cashierID,
+                        "CashierName": that.cashierName,
+                        "TransactionType": "2",
+                        "ShippingMethod": "",
+                        "GrossAmount": this.getView().byId("gross").getCount().toString(),
+                        "Discount": this.getView().byId("discount").getCount().toString().replace("-", ""),
+                        "VatAmount": this.getView().byId("vat").getCount().toString(),
+                        "SaleAmount": this.getView().byId("saleAmount").getCount().toString(),
+                        "Currency": "AED",
+                        "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(), // Required for Return Sales
+                        "CustomerName": this.getView().byId("customer").getCount(),
+                        "ContactNo": that.mainData.ContactNo,
+                        "EMail": that.mainData.EMail,
+                        "Address": that.mainData.Address,
+                        "ShippingInstruction": "",
+                        "DeliveryDate": new Date(),
+                        "ToItems": { "results": this.oPayloadTableItems() },
+                        "ToDiscounts": { "results": this.oPayloadTableDiscountItems() },
+                        "ToPayments": { "results": this.oPayloadPayments() },
+                        "ToSerials": { "results": this.oPayloadSerialNumber() },
+                        "Remarks": ""
+
                     }
-                });
-            }
-            else{
-                MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
-            }
+                    if (parseInt(qty) === parseInt(totalCount)) {
+                        that.getView().setBusy(true);
+                        this.oModel.create("/SalesTransactionHeaderSet", oPayload, {
+                            success: function (oData) {
+                                that.getView().byId("tranNumber").setCount(oData.TransactionId);
+                                that.getView().setBusy(false);
+                                that.oEvent.setPressEnabled(true);
+                                MessageBox.success("Item has been successfully returned.", {
+                                    onClose: function (sAction) {
+                                        window.location.reload(true);
+                                    }
+                                });
+
+                            },
+                            error: function (oError) {
+                                that.oEvent.setPressEnabled(true);
+                                that.getView().setBusy(false);
+                                sap.m.MessageToast.show("Error");
+                            }
+                        });
+                    }
+                    else {
+                        this.oEvent.setPressEnabled(true);
+                        sap.m.MessageBox.error("Kindly select the serial number for the serialized Item");
+
+                    }
+                }
+                else {
+                    MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
+                }
 
             },
             oPayloadPayments: function () {
@@ -1215,11 +1255,11 @@ sap.ui.define([
                 });
                 return this.aPaymentEntries;
             },
-            oPayloadTableDiscountItems: function(){
+            oPayloadTableDiscountItems: function () {
                 return this.ToDiscounts.results;
             },
-            oPayloadTableItems: function(){
-                var itemArr=[];
+            oPayloadTableItems: function () {
+                var itemArr = [];
                 if (this.getView().byId("idProductsTable").getSelectedItems().length > 0) {
                     var oTable = this.byId("idProductsTable");
                     var aSelectedContexts = oTable.getSelectedContexts();
@@ -1227,67 +1267,94 @@ sap.ui.define([
                         return oContext.getObject();
                     });
                     var tableData = aSelectedContexts;
-             
 
-                for (var count = 0; count < tableData.length; count++) {
-                    var itemData = tableData[count].getModel().getObject(tableData[count].sPath);
-                    itemArr.push({
-                        "TransactionId": "",
-                        "TransactionItem": itemData.TransactionItem,
-                        "Plant": itemData.Plant,
-                        "Location": itemData.Location,
-                        "Material": itemData.Material,
-                        "Description": itemData.Description,
-                        "Quantity": itemData.returnQty,
-                        "Unit": "EA",
-                        "UnitPrice": itemData.UnitPrice,
-                        "UnitDiscount": itemData.UnitDiscount,
-                        "GrossAmount": itemData.returnAmount,
-                        "Discount": itemData.returnDiscount,
-                        "NetAmount": parseFloat(parseFloat(itemData.returnAmount) - parseFloat(itemData.returnDiscount)).toFixed(2),
-                        "VatPercent": itemData.VatPercent,
-                        "VatAmount": itemData.VatAmount,
-                        "SaleAmount": itemData.returnTotalAmount,
-                        "Currency": "AED",
-                        "FocItem": "",
-                        "SalesmanId": itemData.SalesmanId,
-                        "SalesmanName": itemData.SalesmanName,
-                        "OriginalTransactionId": itemData.TransactionId,
-                        "OriginalTransactionItem": itemData.TransactionItem
-                    })
-                }
 
-                return itemArr;
-            }
-            else{
-                MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
-            }
-            },
-            oPayloadSerialNumber: function(){
-                this.serialNumber =[];
-                if(this.aReturnSerialsNo.length > 0){
-
-                    for(var count=0; count < this.aReturnSerialsNo.length; count++){
-                        this.serialNumber.push({
-                             "TransactionId": "",
-                             "TransactionItem": "",
-                             "SerialId": this.aReturnSerialsNo[count].SerialId,
-                             "SerialNo": this.aReturnSerialsNo[count].SerialNo,
-                             "VoucherType": "",
-                             "VoucherStatus": "",
-                             "VoucherAmount": "0.00",
-                             "Currency": "",
-                             "ExpiryDate": new Date(),
-                             "OriginalTransactionId": this.aReturnSerialsNo[count].TransactionId,
-                             "OriginalTransactionItem": this.aReturnSerialsNo[count].TransactionItem
+                    for (var count = 0; count < tableData.length; count++) {
+                        var itemData = tableData[count].getModel().getObject(tableData[count].sPath);
+                        itemArr.push({
+                            "TransactionId": "",
+                            "TransactionItem": itemData.TransactionItem,
+                            "Plant": itemData.Plant,
+                            "Location": itemData.Location,
+                            "Material": itemData.Material,
+                            "Description": itemData.Description,
+                            "Quantity": itemData.returnQty,
+                            "Unit": "EA",
+                            "UnitPrice": itemData.UnitPrice,
+                            "UnitDiscount": itemData.UnitDiscount,
+                            "GrossAmount": itemData.returnAmount,
+                            "Discount": itemData.returnDiscount,
+                            "NetAmount": parseFloat(parseFloat(itemData.returnAmount) - parseFloat(itemData.returnDiscount)).toFixed(2),
+                            "VatPercent": itemData.VatPercent,
+                            "VatAmount": itemData.VatAmount,
+                            "SaleAmount": itemData.returnTotalAmount,
+                            "Currency": "AED",
+                            "FocItem": "",
+                            "SalesmanId": itemData.SalesmanId,
+                            "SalesmanName": itemData.SalesmanName,
+                            "OriginalTransactionId": itemData.TransactionId,
+                            "OriginalTransactionItem": itemData.TransactionItem
                         })
                     }
-                    return this.serialNumber;
+
+                    return itemArr;
                 }
-                else{
-                   return []
+                else {
+                    MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
                 }
+            },
+            oPayloadSerialNumber: function () {
+                this.serialNumber = [];
+
+                for (const material in this._serialStore) {
+                    const entry = this._serialStore[material];
+                    const transactionItem = entry.transactionItem;
+                    const serials = entry.serials;
+
+                    serials.forEach(serial => {
+                        this.serialNumber.push({
+                            "TransactionId": "",
+                            "TransactionItem": "",
+                            "SerialId": serial.SerialId,
+                            "SerialNo": serial.SerialNo,
+                            "VoucherType": "",
+                            "VoucherStatus": "",
+                            "VoucherAmount": "0.00",
+                            "Currency": "",
+                            "ExpiryDate": new Date(),
+                            "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(),
+                            "OriginalTransactionItem": transactionItem
+                        });
+                    });
+                }
+
+                return this.serialNumber;
+            },
+            validateSerialStoreMaterials: function () {
+                const serialStoreMaterials = Object.keys(this._serialStore); // materials from the store
+
+                // Get selected rows from table
+                const oTable = this.byId("idProductsTable"); // replace with actual ID
+                const selectedItems = oTable.getSelectedItems(); // for sap.m.Table
+                // const selectedIndices = oTable.getSelectedIndices(); // for sap.ui.table.Table
+
+                // Get selected materials
+                const selectedMaterials = selectedItems.map(item => {
+                    const ctx = item.getBindingContext("ProductModel");
+                    return ctx?.getProperty("Material");
+                }).filter(Boolean);
+
+                // Check if all stored materials are selected
+                const missingMaterials = serialStoreMaterials.filter(mat => !selectedMaterials.includes(mat));
+
+                if (missingMaterials.length > 0) {
+                    sap.m.MessageBox.error("Please select all materials for which serial numbers are stored.");
+                    return false;
+                }
+
+                return true;
             }
+
 
         });
     });
