@@ -1150,85 +1150,116 @@ sap.ui.define([
 
                 return `PT${hours}H${minutes}M${seconds}S`;
             },
-            onPressReturn: function (oEvent) {
-                var that = this;
-                this.oEvent = oEvent.getSource();
+            validateReturn: function(){
+                var oTable = this.byId("idProductsTable");
+                var aSelectedItems = oTable.getSelectedItems();
+                var oModel = this.getView().getModel("ProductModel");
+                var totalCount = 0;
+                var iTotalReturnQty = 0;
+                var bFlag = true;
                 var qty = this.getView().byId("qty").getCount()
-                let totalCount = 0;
-
+                var bHasSerializedItemSelected = false; // <-- Indicator
+                aSelectedItems.forEach(function (oItem) {
+                    var oContext = oItem.getBindingContext("ProductModel");
+                    var oData = oContext.getObject();
+                    if (oData.SerialNumbers) {
+                        bHasSerializedItemSelected = true;
+                        iTotalReturnQty += parseFloat(oData.returnQty);   
+                    }
+                });
                 for (const material in this._serialStore) {
                     const serialList = this._serialStore[material].serials;
                     totalCount += serialList.length;
                 }
-                if (!this.validateSerialStoreMaterials()) {
-                    return; 
+
+                if(aSelectedItems.length === 0){
+                    bFlag = false;
+                    sap.m.MessageBox.error("Kindly select item to Return");
+                    
                 }
-
-                if (this.getView().byId("idProductsTable").getSelectedItems().length > 0 && parseInt(qty) > 0) {
-                    this.oEvent.setPressEnabled(false);
-                    var oPayload = {
-                        "TransactionId": "",
-                        "TransactionDate": new Date(),//new Date().toISOString().slice(0, 10).replace(/-/g, ''),
-                        "ExpiryDate": new Date(),
-                        "TransactionTime": this.getTimeInISO8601Format(),//new Date().toTimeString().slice(0, 8).replace(/:/g, ''),
-                        "TransactionStatus": "1",
-                        "SalesOrder": "",
-                        "Flag": "",
-                        "Store": that.storeID,
-                        "Plant": that.plantID,
-                        "CashierId": that.cashierID,
-                        "CashierName": that.cashierName,
-                        "TransactionType": "2",
-                        "ShippingMethod": "",
-                        "GrossAmount": this.getView().byId("gross").getCount().toString(),
-                        "Discount": this.getView().byId("discount").getCount().toString().replace("-", ""),
-                        "VatAmount": this.getView().byId("vat").getCount().toString(),
-                        "SaleAmount": this.getView().byId("saleAmount").getCount().toString(),
-                        "Currency": "AED",
-                        "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(), // Required for Return Sales
-                        "CustomerName": this.getView().byId("customer").getCount(),
-                        "ContactNo": that.mainData.ContactNo,
-                        "EMail": that.mainData.EMail,
-                        "Address": that.mainData.Address,
-                        "ShippingInstruction": "",
-                        "DeliveryDate": new Date(),
-                        "ToItems": { "results": this.oPayloadTableItems() },
-                        "ToDiscounts": { "results": this.oPayloadTableDiscountItems() },
-                        "ToPayments": { "results": this.oPayloadPayments() },
-                        "ToSerials": { "results": this.oPayloadSerialNumber() },
-                        "Remarks": ""
-
+                else if(bHasSerializedItemSelected){
+                    if(iTotalReturnQty !== totalCount || iTotalReturnQty === 0 || totalCount === 0){
+                        bFlag = false;
+                        sap.m.MessageBox.error("Enter the serial number for the given return qty for all the selected return items.");
+                       
                     }
-                    if (parseInt(qty) === parseInt(totalCount)) {
-                        that.getView().setBusy(true);
-                        this.oModel.create("/SalesTransactionHeaderSet", oPayload, {
-                            success: function (oData) {
-                                that.getView().byId("tranNumber").setCount(oData.TransactionId);
-                                that.getView().setBusy(false);
-                                that.oEvent.setPressEnabled(true);
-                                MessageBox.success("Item has been successfully returned.", {
-                                    onClose: function (sAction) {
-                                        window.location.reload(true);
-                                    }
-                                });
+                }
+                else if(qty === 0 || qty === ""){
+                    bFlag = false;
+                    sap.m.MessageBox.error("Enter the return qty for all the selected return items.");
+                  
 
-                            },
-                            error: function (oError) {
-                                that.oEvent.setPressEnabled(true);
-                                that.getView().setBusy(false);
-                                sap.m.MessageToast.show("Error");
-                            }
-                        });
-                    }
-                    else {
-                        this.oEvent.setPressEnabled(true);
-                        sap.m.MessageBox.error("Kindly select the serial number for the serialized Item");
-
-                    }
                 }
                 else {
-                    MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
+                    bFlag = true;
+                   
                 }
+
+                return bFlag;
+
+            },
+            onPressReturn: function (oEvent) {
+                var that = this;
+                this.oEvent = oEvent.getSource();
+                var bFlag = this.validateReturn();
+                if(bFlag){
+                var oPayload = {
+                    "TransactionId": "",
+                    "TransactionDate": new Date(),//new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+                    "ExpiryDate": new Date(),
+                    "TransactionTime": this.getTimeInISO8601Format(),//new Date().toTimeString().slice(0, 8).replace(/:/g, ''),
+                    "TransactionStatus": "1",
+                    "SalesOrder": "",
+                    "Flag": "",
+                    "Store": that.storeID,
+                    "Plant": that.plantID,
+                    "CashierId": that.cashierID,
+                    "CashierName": that.cashierName,
+                    "TransactionType": "2",
+                    "ShippingMethod": "",
+                    "GrossAmount": this.getView().byId("gross").getCount().toString(),
+                    "Discount": this.getView().byId("discount").getCount().toString().replace("-", ""),
+                    "VatAmount": this.getView().byId("vat").getCount().toString(),
+                    "SaleAmount": this.getView().byId("saleAmount").getCount().toString(),
+                    "Currency": "AED",
+                    "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(), // Required for Return Sales
+                    "CustomerName": this.getView().byId("customer").getCount(),
+                    "ContactNo": that.mainData.ContactNo,
+                    "EMail": that.mainData.EMail,
+                    "Address": that.mainData.Address,
+                    "ShippingInstruction": "",
+                    "DeliveryDate": new Date(),
+                    "ToItems": { "results": this.oPayloadTableItems() },
+                    "ToDiscounts": { "results": this.oPayloadTableDiscountItems() },
+                    "ToPayments": { "results": this.oPayloadPayments() },
+                    "ToSerials": { "results": this.oPayloadSerialNumber() },
+                    "Remarks": ""
+
+                }
+
+                that.getView().setBusy(true);
+                this.oModel.create("/SalesTransactionHeaderSet", oPayload, {
+                    success: function (oData) {
+                        that.getView().byId("tranNumber").setCount(oData.TransactionId);
+                        that.getView().setBusy(false);
+                        that.oEvent.setPressEnabled(true);
+                        MessageBox.success("Item has been successfully returned.", {
+                            onClose: function (sAction) {
+                                window.location.reload(true);
+                            }
+                        });
+
+                    },
+                    error: function (oError) {
+                        that.oEvent.setPressEnabled(true);
+                        that.getView().setBusy(false);
+                        sap.m.MessageToast.show("Error");
+                    }
+                });
+            }
+
+
+
 
             },
             oPayloadPayments: function () {
@@ -1248,7 +1279,7 @@ sap.ui.define([
                     "CardNumber": "",
                     "AuthorizationCode": "",
                     "CardReceiptNo": "",
-                    "PaymentType": "CREDIT_NOTE",
+                    "PaymentType": "CREDIT NOTE",
                     "VoucherNumber": "",
                     "SourceId": ""
 
