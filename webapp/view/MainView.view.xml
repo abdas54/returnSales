@@ -1,11 +1,11 @@
 <mvc:View controllerName="com.eros.returnsales.controller.MainView"
    xmlns:mvc="sap.ui.core.mvc" displayBlock="true" xmlns="sap.m"
 	xmlns:l="sap.ui.layout" xmlns:ndc="sap.ndc" xmlns:f="sap.ui.layout.form" xmlns:core="sap.ui.core">
-   <Page id="page" title="{i18n>title}" enableScrolling="false" showHeader="false" >
+   <Page id="page" title="{i18n>title}" enableScrolling="false" showHeader="false" class="noPaddingPage page" >
 		
 		<content>
 		<HBox alignItems="Stretch" width="100%" class="cstmHBox">
-				<IconTabBar class="cstmHBox" expandable="false">
+				<IconTabBar class="cstmHBox page textIconBar" expandable="false">
 					<items>
 						<IconTabFilter id="tranNumber" class="sapUiSmallMarginEnd" design="Horizontal" icon="sap-icon://documents" iconColor="Positive" count=""
 							text="Transaction Number" key="Ok"/>
@@ -32,7 +32,7 @@
            
 				<VBox width="80%" height="60%">
                  <HBox class="sapUiSmallMarginTop">
-                <Input class="inputStyle sapUiSmallMarginBeginEnd" width="98%" id="salesTrans" change="getTransactionData" placeholder="Enter Sales Transacation Number">
+                <Input class="inputStyle sapUiSmallMarginBeginEnd" width="98%" id="salesTrans" change="getTransactionData" placeholder="Enter Sales Transaction Number">
                 <layoutData>
 								<FlexItemData growFactor="2"/>
 							</layoutData>
@@ -144,15 +144,15 @@
 					<l:VerticalLayout class="sapUiContentPadding equalColumns" width="100%">
 						
 						
-                        <GenericTile header="RETURN" frameType="OneByHalf" press="onPressReturn" class="customTile">
+                        <GenericTile header="RETURN" frameType="OneByHalf" press="onPressReturn" class="customTile" headerImage="sap-icon://undo">
 							<TileContent>
-								<Button type="Transparent" icon="sap-icon://undo"/>
+							<!--<Button type="Transparent" icon="sap-icon://undo"/>-->	
 
 							</TileContent>
 						</GenericTile>
-						<GenericTile header="RESTOCKING FEE" frameType="OneByHalf" press="onPressDiscount" class="customTile">
+						<GenericTile header="RESTOCKING FEE" frameType="OneByHalf" press="onPressDiscount" class="customTile" headerImage="sap-icon://activate">
 							<TileContent>
-								<Button type="Transparent" icon="sap-icon://undo"/>
+								<!--<Button type="Transparent" icon="sap-icon://undo"/>-->
 
 							</TileContent>
 						</GenericTile>

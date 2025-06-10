@@ -61,6 +61,8 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
   
   font-size: 0.5 !important;
 
+
+
 }
 .sapMITBFilter .sapMITBText .sapMITHTextContent {
   
@@ -78,6 +80,13 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
 .customTile {
   font-weight: bold !important;
   border-radius: 12px !important; /* rounded corners */
+  text-align: center !important;
+  background-color:  #a6b7c3 !important;
+   width: 225px !important;
+}
+
+.customTile .sapMGT.OneByHalf {
+    width: 100% !important;
 }
 
 .sapMGTHdrTxt>.sapMText {
@@ -87,7 +96,8 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
 }
 
 .cstmHBox {
-  display: contents !important;
+    display: contents !important;
+    background-color: #929da5 !important;
 }
 
 
@@ -168,3 +178,32 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
   height: 2.5rem !important;
 }
 
+.sapMGTHdrIconImage {
+    color: #1f2123 !important;
+}
+
+.sapMTableTH {
+    background: #2f4156 !important;
+    
+}
+
+.customTableHeader .sapMListHdrText {
+    background-color: #f2f7f1 !important;
+    font-weight: bold;
+}
+
+.sapUiTableHeaderDataCell .sapMText, .sapMColumnHeader .sapMText {
+    color: #dde3e9 !important;
+}
+
+.page {
+    background-color: #c8d9e6 !important;
+
+}
+#__bar0--header {
+     background-color: #c8d9e6 !important;
+}
+
+.customTableHeader .sapMListTblHeader {
+    background-color: #0812db !important; /* light blue */
+}
