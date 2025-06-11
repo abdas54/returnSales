@@ -76,9 +76,7 @@
 									<Text text="Discount"/>
 								</Column> -->
 							
-								<!-- <Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
-									<Text text="Total Amount"/>
-								</Column> -->
+								
 								<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
 									<Text text="Unit Discount"/>
 								</Column>
