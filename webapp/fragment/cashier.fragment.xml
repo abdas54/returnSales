@@ -7,10 +7,10 @@
 					labelSpanM="3" labelSpanS="12" adjustLabelSpan="false" emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0" columnsXL="1"
 					columnsL="1" columnsM="1" singleContainerFullSize="false">
 					<f:content>
-						<Label design="Bold" text="Enter Cashier ID" class="cashierLogin"/>
-						<Input type="Number"/>
-						<Label design="Bold" text="Enter Pin" class="cashierLogin"/>
-						<Input type="Password"/>
+						<Label design="Bold" class="cashierLogin" text="Enter Cashier ID" required="true"/>
+						<Input type="Number" change="enableValidateBtn" />
+						<Label design="Bold" class="cashierLogin" text="Enter Pin"  required="true"/>
+						<Input type="Password" change="enableValidateBtn"/>
 					</f:content>
 				</f:SimpleForm>
 			</VBox>
@@ -20,7 +20,7 @@
 			<Button text="Close" press="fnCloseCashier" class="cstmBtn"/>
 		</beginButton>
 		<endButton>
-			<Button text="Validate" press="fnValidateCashier" class="cstmBtn"/>
+			<Button text="Validate" id="validatebtn" press="fnValidateCashier" enabled="false" class="cstmBtn"/>
 		</endButton>
 	</Dialog>
 </core:FragmentDefinition>

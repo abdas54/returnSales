@@ -53,7 +53,25 @@ sap.ui.define([
                 this.aReturnSerialsNo = [];
                 this.aEntries1 = [];
                 this._serialStore = {};
+                 this.cashierID ="";
+                this.CashierPwd="";
 
+            },
+            enableValidateBtn: function(oEvent){
+                if(oEvent.getSource().getId() === "__input1"){
+                    this.cashierID = oEvent.getSource().getValue();
+                }
+                else if(oEvent.getSource().getId() === "__input2"){
+                    this.CashierPwd = oEvent.getSource().getValue();
+                }
+
+                
+                if(this.cashierID.length > 0 && this.CashierPwd.length > 0){
+                    sap.ui.getCore().byId("validatebtn").setEnabled(true);
+                }
+                else{
+                    sap.ui.getCore().byId("validatebtn").setEnabled(false);
+                }
             },
             validateLoggedInUser: function () {
                 var that = this;
