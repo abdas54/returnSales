@@ -8,9 +8,9 @@
 					columnsL="1" columnsM="1" singleContainerFullSize="false">
 					<f:content>
 						<Label design="Bold" class="cashierLogin" text="Enter Cashier ID" required="true"/>
-						<Input type="Number" change="enableValidateBtn" />
+						<Input id="cashId" type="Number" change="enableValidateBtn" liveChange="enableValidateBtn"/>
 						<Label design="Bold" class="cashierLogin" text="Enter Pin"  required="true"/>
-						<Input type="Password" change="enableValidateBtn"/>
+						<Input id="casPwd" type="Password" change="enableValidateBtn" liveChange="enableValidateBtn"/>
 					</f:content>
 				</f:SimpleForm>
 			</VBox>
