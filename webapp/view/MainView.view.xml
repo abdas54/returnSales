@@ -44,7 +44,7 @@
 				<HBox>
 				
 				</HBox>
-                <ScrollContainer class="sapUiSmallMarginTop sapUiSmallMarginBegin" horizontal="false" vertical="true">
+                <ScrollContainer class="sapUiSmallMarginTop sapUiSmallMarginBegin" horizontal="false" height="550px" vertical="true">
 						<Table id="idProductsTable"  items="{ProductModel>/items}" mode="MultiSelect"  sticky="ColumnHeaders"
 							itemPress="onProductRowPress">
 							<headerToolbar>
@@ -142,7 +142,7 @@
 					<l:VerticalLayout class="sapUiContentPadding equalColumns" width="100%">
 						
 						
-                        <GenericTile header="RETURN" frameType="OneByHalf" press="onPressReturn" class="customTile" headerImage="sap-icon://undo">
+                        <GenericTile header="RETURN" frameType="OneByHalf" press="onPressReturn1" class="customTile" headerImage="sap-icon://undo">
 							<TileContent>
 							<!--<Button type="Transparent" icon="sap-icon://undo"/>-->	
 

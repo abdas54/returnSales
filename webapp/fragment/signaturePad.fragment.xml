@@ -1,0 +1,36 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:sig="com.eros.returnsales.control">
+	<Dialog contentWidth="600px" contentHeight="450px">
+		<customHeader>
+			<Toolbar>
+				<ToolbarSpacer/>
+				<Title text="Signature Pad"/>
+				<ToolbarSpacer/>
+				<Button icon="sap-icon://sys-cancel-2" press="onDialogClose"/>
+			</Toolbar>
+		</customHeader>
+		<!-- <VBox class="sapUiTinyMarginBottom sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop">
+			<Label text="First Name" required="true"/>
+			<Input id="idName" type="Text" maxLength="60"/>
+		</VBox>
+		<VBox class="sapUiTinyMarginBottom sapUiSmallMarginBegin sapUiSmallMarginEnd">
+			<Label text="Last Name" required="true"/>
+			<Input id="idStaff" type="Text" maxLength="30"/>
+		</VBox>
+		<VBox class="sapUiTinyMarginBottom sapUiSmallMarginBegin sapUiSmallMarginEnd" visible="{=${local>/SignInd}===''?true:false}">
+			<Label text="Comments" required="false"/>
+			<TextArea id="idComments" maxLength="255" width="100%"/>
+		</VBox> -->
+		<VBox class="sapUiTinyMarginBottom sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop" >
+			<Label text="Customer Signature " required="true"/>
+			<sig:signaturePadControl id="idSignaturePad" width="250PX" height="150PX" thickness="" bgcolor="rgb(255, 255, 255)" signcolor="" ></sig:signaturePadControl>
+		</VBox>
+		<VBox class="sapUiTinyMarginBottom sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop">
+			<Label text="Cashier Signature " required="true"/>
+			<sig:signaturePadControl id="idSignaturePadCash" width="250PX" height="150PX" thickness="" bgcolor="rgb(255, 255, 255)" signcolor="" ></sig:signaturePadControl>
+		</VBox>
+		<buttons>
+			<Button text="Clear" type="Reject" press="onClear"/>
+			<Button text="Save" type="Emphasized" press="onSave"/>
+		</buttons>
+	</Dialog>
+</core:FragmentDefinition>

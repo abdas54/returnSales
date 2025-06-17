@@ -318,18 +318,7 @@ sap.ui.define([
                     errorMessage += "Customer Type is required.\n";
                 }
 
-                // Additional fields for Tourist (CustType === "2")
-                if (custData.CustType === "2") {
-                    if (!custData.CardType || custData.CardType.trim() === "") {
-                        errorMessage += "Card Type is required for Tourists.\n";
-                    }
-                    if (!custData.IssueBy || custData.IssueBy.trim() === "") {
-                        errorMessage += "Issued By is required for Tourists.\n";
-                    }
-                    if (!custData.IdenCardNum || custData.IdenCardNum.trim() === "") {
-                        errorMessage += "Card Number is required for Tourists.\n";
-                    }
-                }
+              
 
 
                 // Show message if there are errors
@@ -447,14 +436,10 @@ sap.ui.define([
             onCustomerTypeChange: function (oEvent) {
 
                 if (oEvent.getParameter("selectedItem").getProperty("key") === "2") {
-                    sap.ui.getCore().byId("cardTypelbl").setRequired(true);
-                    sap.ui.getCore().byId("issuedBylbl").setRequired(true);
-                    sap.ui.getCore().byId("cardNumberlbl").setRequired(true);
+                   
                 }
                 else {
-                    sap.ui.getCore().byId("cardTypelbl").setRequired(false);
-                    sap.ui.getCore().byId("issuedBylbl").setRequired(false);
-                    sap.ui.getCore().byId("cardNumberlbl").setRequired(false);
+                    
                 }
 
             },
@@ -800,7 +785,7 @@ sap.ui.define([
                 else {
                     oEvent.getSource().getEventingParent().getItems()[1].setValue(parseInt(retQty) - 1);
                     sap.m.MessageBox.show(
-                        "Entered Quantity should not be zero", {
+                        "Return quantity cannot exceed the original sold quantity.", {
                         icon: sap.m.MessageBox.Icon.Error,
                         title: "Error",
                         actions: ["OK"],
@@ -1218,7 +1203,7 @@ sap.ui.define([
             },
             onPressReturn: function (oEvent) {
                 var that = this;
-                this.oEvent = oEvent.getSource();
+                // this.oEvent = oEvent.getSource();
                 var bFlag = this.validateReturn();
                 if(bFlag){
                 var oPayload = {
@@ -1260,7 +1245,13 @@ sap.ui.define([
                     success: function (oData) {
                         that.getView().byId("tranNumber").setCount(oData.TransactionId);
                         that.getView().setBusy(false);
-                        that.oEvent.setPressEnabled(true);
+                         that._pAddRecordDialog.then(
+                    function (oValueHelpDialog) {
+                     
+                        oValueHelpDialog.setBusy(false);
+                    }.bind(that)
+                );
+                        // that.oEvent.setPressEnabled(true);
                         MessageBox.success("Item has been successfully returned.", {
                             onClose: function (sAction) {
                                 window.location.reload(true);
@@ -1352,6 +1343,30 @@ sap.ui.define([
                     MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
                 }
             },
+            onPressReturn1: function(){
+                this.OnSignaturePress();
+            },
+                 OnSignaturePress: function () {
+                var that = this,
+                    oView = this.getView();
+                if (!this._pAddRecordDialog) {
+                    this._pAddRecordDialog = Fragment.load({
+                        id: oView.getId(),
+                        name: "com.eros.returnsales.fragment.signaturePad",
+                        controller: this,
+                    }).then(function (oValueHelpDialog) {
+                        oView.addDependent(oValueHelpDialog);
+                        return oValueHelpDialog;
+                    });
+                }
+
+                this._pAddRecordDialog.then(
+                    function (oValueHelpDialog) {
+                        that.onClear();
+                        oValueHelpDialog.open();
+                    }.bind(that)
+                );
+            },
             oPayloadSerialNumber: function () {
                 this.serialNumber = [];
 
@@ -1378,6 +1393,112 @@ sap.ui.define([
                 }
 
                 return this.serialNumber;
+            },
+                 onClear: function () {
+                sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePad").clear();
+                sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePadCash").clear();
+               
+            },
+               onSave: function () {
+                var that = this,
+                    token,
+                    dataUrl,
+                    oSvg = sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePad").getSVGString(),
+                    oSvgCash = sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePadCash").getSVGString();
+                this.oPaySignatureload = [];
+                // oName = sap.ui.core.Fragment.byId(this.getView().getId(), "idName").getValue(),
+                // oStaff = sap.ui.core.Fragment.byId(this.getView().getId(), "idStaff").getValue(),
+                // oComments = sap.ui.core.Fragment.byId(this.getView().getId(), "idComments").getValue();
+
+                if (!oSvg.includes('d=') || !oSvgCash.includes('d=')) {
+                    MessageBox.error('Signature is required');
+                    return false;
+                }
+                const svgBlob = new Blob([oSvg], {
+                    type: 'image/svg+xml'
+                });
+                const svgObjectUrl = globalThis.URL.createObjectURL(svgBlob);
+                const img = document.createElement('img');
+
+                const onImageLoaded = () => {
+                    const canvas = document.createElement('canvas');
+                    //canvas.width="350";
+                    //canvas.height="100";
+                    const context = canvas.getContext('2d');
+                    const createdImage = document.createElement('img');
+
+                    context.drawImage(img, 0, 0);
+                    createdImage.src = canvas.toDataURL('image/bmp');
+                    //binary code
+                    var oArray = (createdImage.src).split(";base64,")[1];
+                    var raw = window.atob(oArray);
+                    var rawLength = raw.length;
+                    var array = new Uint8Array(new ArrayBuffer(rawLength));
+                    for (var i = 0; i < rawLength; i++) {
+                        array[i] = raw.charCodeAt(i);
+                    }
+
+                    this.oPaySignatureload.push({
+                        "TransactionId": this.getView().byId("tranNumber").getCount(),
+                        "Value": oArray,
+                        "Mimetype": 'image/bmp',
+                        "SignType": "S"
+                    })
+
+
+                };
+
+                img.addEventListener('load', onImageLoaded);
+                img.src = svgObjectUrl;
+
+
+
+                const svgBlobCash = new Blob([oSvgCash], {
+                    type: 'image/svg+xml'
+                });
+                const svgObjectUrlCash = globalThis.URL.createObjectURL(svgBlobCash);
+                const imgCash = document.createElement('img');
+
+                const onImageLoadedCash = () => {
+                    const canvasCash = document.createElement('canvas');
+                    //canvas.width="350";
+                    //canvas.height="100";
+                    const contextCash = canvasCash.getContext('2d');
+                    const createdImageCash = document.createElement('img');
+
+                    contextCash.drawImage(imgCash, 0, 0);
+                    createdImageCash.src = canvasCash.toDataURL('image/bmp');
+                    //binary code
+                    var oArrayCash = (createdImageCash.src).split(";base64,")[1];
+                    var rawCash = window.atob(oArrayCash);
+                    var rawLengthCash = rawCash.length;
+                    var arrayCash = new Uint8Array(new ArrayBuffer(rawLengthCash));
+                    for (var j = 0; j < rawLengthCash; j++) {
+                        arrayCash[j] = rawCash.charCodeAt(j);
+                    }
+
+                    this.oPaySignatureload.push({
+                        "TransactionId": this.getView().byId("tranNumber").getCount(),
+                        "Value": oArrayCash,
+                        "Mimetype": 'image/bmp',
+                        "SignType": "C"
+                    })
+
+
+                };
+
+                imgCash.addEventListener('load', onImageLoadedCash);
+                imgCash.src = svgObjectUrlCash;
+                that._pAddRecordDialog.then(
+                    function (oValueHelpDialog) {
+                        that.onClear();
+                        oValueHelpDialog.setBusy(true);
+                    }.bind(that)
+                );
+                setTimeout(function(){
+                    that.onPressReturn(true);},1000)
+
+
             },
             validateSerialStoreMaterials: function () {
                 const serialStoreMaterials = Object.keys(this._serialStore); // materials from the store

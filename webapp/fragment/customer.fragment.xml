@@ -67,12 +67,7 @@
                                         <core:Item key="2" text="Tourist"/>
                                     </items>
                                 </Select>
-                                <Label id="cardTypelbl" text="Card Type"/>
-                                <Input  value="{custAddModel>/CardType}"/>
-                                <Label id="issuedBylbl" text="Issued By"/>
-                                <Input  value="{custAddModel>/IssueBy}"/>
-                                <Label id="cardNumberlbl" text="Card Number"/>
-                                <Input  value="{custAddModel>/IdenCardNum}"/>
+                               
                                 
 								</form:SimpleForm>
 							

@@ -180,7 +180,7 @@
 		
 			<buttons>
 			<Button text="Print Transaction" type="Reject" press="onClear" class="cstmBtn"/>
-			<Button text="Signature" type="Emphasized" press="OnSignaturePress" class="cstmBtn"/>
+			 <Button text="Signature" type="Emphasized" press="OnSignaturePress" class="cstmBtn" visible="false"/>
 			<Button id="sbmtTrans" visible="false" text="Submit" type="Emphasized" press="onPressPaymentTest" class="cstmBtn"/>
 			<Button text="Close" type="Emphasized" press="onPressClose" class="cstmBtn"/>
 		</buttons>
