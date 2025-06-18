@@ -84,6 +84,13 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
   background-color:  #a6b7c3 !important;
    width: 225px !important;
 }
+.customTileCust{
+    font-weight: bold !important;
+    border-radius: 8px !important; /* rounded corners */
+    text-align: center !important;
+    background-color:  #a6b7c3 !important;
+    height: 4rem !important;
+}
 
 .customTile .sapMGT.OneByHalf {
     width: 100% !important;

@@ -1,13 +1,20 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:f="sap.f.cards"
 	xmlns:l="sap.ui.layout" xmlns:g="sap.f">
-	<Dialog title="Manual Discount" contentHeight="400px" contentWidth="1000px">
+	<Dialog title="Manual Discount" contentHeight="1000px" contentWidth="1000px">
 		<content>
 			
 			
 			<HBox>
 				<VBox class="sapUiSmallMargin">
 					<List items="{DiscountModel>/DiscountList}" mode="None" class="roundedList">
-						<StandardListItem title="{DiscountModel>option}" type="Active" press="onDiscountSectSelected"/>
+					 <CustomListItem>
+                    <GenericTile  frameType="OneByHalf" press="onDiscountSectSelected" header="{DiscountModel>option}" class="customTileCust" headerImage="{DiscountModel>icon}">
+							<TileContent>
+								<!-- <Button type="Transparent" icon="sap-icon://product"/> -->
+							</TileContent>
+						</GenericTile>
+                    </CustomListItem>
+						<!-- <StandardListItem title="{DiscountModel>option}" type="Active" press="onDiscountSectSelected"/> -->
 					</List>
 				</VBox>
 				<VBox width="700px">

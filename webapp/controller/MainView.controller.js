@@ -170,9 +170,11 @@ sap.ui.define([
             onPressCustData: function () {
                 var oModel = new sap.ui.model.json.JSONModel({
                     customerData: [{
-                        option: "Basic Information"
+                        option: "Basic Information",
+                        icon : "sap-icon://add-contact"
                     }, {
-                        option: "Customer Address"
+                        option: "Customer Address",
+                         icon : "sap-icon://database"
                     }]
                 });
                 this.getView().setModel(oModel, "CustModel");
@@ -362,7 +364,7 @@ sap.ui.define([
 
             },
             onOptionSelect: function (oEvent) {
-                var sSelectedOption = oEvent.getSource().getTitle();
+                var sSelectedOption = oEvent.getSource().getProperty("header"); //oEvent.getSource().getTitle();
                 var showSection = new JSONModel();
                 showSection.setData({
                     "selectedMode": sSelectedOption
@@ -851,17 +853,23 @@ sap.ui.define([
 
                     var oModel = new sap.ui.model.json.JSONModel({
                         DiscountList: [{
-                            option: "Item List"
+                            option: "Item List",
+                             icon : "sap-icon://activities"
                         }, {
-                            option: "Discounts Condition"
+                            option: "Discounts Condition",
+                             icon : "sap-icon://blank-tag-2"
                         }, {
-                            option: "Reason Type"
+                            option: "Reason Type",
+                              icon : "sap-icon://cause"
                         }, {
-                            option: "Authority"
+                            option: "Authority",
+                             icon : "sap-icon://employee"
                         }, {
-                            option: "Amount"
+                            option: "Amount",
+                             icon : "sap-icon://money-bills"
                         }, {
-                            option: "View All Records"
+                            option: "View All Records",
+                             icon : "sap-icon://sum"
                         }]
                     });
                     this.getView().setModel(oModel, "DiscountModel");
@@ -890,7 +898,7 @@ sap.ui.define([
                 }
             },
             onDiscountSectSelected: function (oEvent) {
-                var sSelectedOption = oEvent.getSource().getTitle();
+                var sSelectedOption = oEvent.getSource().getProperty("header"); //oEvent.getSource().getTitle();
                 var showSection = new JSONModel();
                 showSection.setData({
                     "selectedMode": sSelectedOption,
@@ -1398,6 +1406,17 @@ sap.ui.define([
                 sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePad").clear();
                 sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePadCash").clear();
                
+            },
+             onDialogClose: function () {
+                this.onClear();
+                this._pAddRecordDialog.then(
+                    function (oValueHelpDialog) {
+                        oValueHelpDialog.close();
+                    }.bind(this)
+                );
+
+               
+
             },
                onSave: function () {
                 var that = this,

@@ -12,7 +12,14 @@
 			<HBox>
 				<VBox class="sapUiSmallMargin">
 					<List items="{CustModel>/customerData}" mode="None" class="roundedList">
-						<StandardListItem title="{CustModel>option}" type="Active" press="onOptionSelect"/>
+                     <CustomListItem>
+                    <GenericTile  frameType="OneByHalf" press="onOptionSelect" header="{CustModel>option}" class="customTileCust" headerImage="{CustModel>icon}">
+							<TileContent>
+								<!-- <Button type="Transparent" icon="sap-icon://product"/> -->
+							</TileContent>
+						</GenericTile>
+                    </CustomListItem>
+						<!-- <StandardListItem title="{CustModel>option}" type="Active" press="onOptionSelect"/> -->
 					</List>
 				</VBox>
 				<VBox >
