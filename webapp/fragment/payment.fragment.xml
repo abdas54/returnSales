@@ -1,6 +1,6 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:f="sap.f.cards"
 	xmlns:l="sap.ui.layout" xmlns:g="sap.f">
-	<Dialog title="Payment" contentHeight="400px" contentWidth="1000px">
+	<Dialog title="Payment" contentHeight="400px" contentWidth="1000px" class="stockDialog">
 		<content>
 			<Label design="Bold" text="Sale Amount:" class="sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop"/>
 			<Text id="totalAmountText"  class="sapUiSmallMarginEnd sapUiSmallMarginTop"/>
@@ -42,7 +42,7 @@
 							<VBox visible="{= ${ShowPaymentSection>/cardPaymentMode} === 1 }">
 								<g:GridList items="{/CardPaymentMenthodsSet}" itemPress="onSelectCardType" >
     							<g:items>
-        							<g:GridListItem type="Active" highlight="Success">
+        							<g:GridListItem type="Active" >
             							<VBox class="sapUiSmallMargin">
             								
                 						<Title text="{CardType}" />
@@ -86,7 +86,7 @@
 							<VBox >
 							<g:GridList items="{/NEGVPaymentMenthodsSet}" itemPress="onSelectNonGV" >
     							<g:items>
-        							<g:GridListItem type="Active" highlight="Success">
+        							<g:GridListItem type="Active" >
             							<VBox class="sapUiSmallMargin">
             								
                 						<Title text="{PaymentMethodName}" />

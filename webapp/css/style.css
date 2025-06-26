@@ -40,10 +40,10 @@
 /* Make each list item rounded */
 .roundedList .sapMLIB {
     margin: 8px;
-    padding: 1px;
+    padding: 0px;
     background: #f9f9f9; /* light background */
     border-radius: 12px; /* rounded corners */
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* light shadow */
+    box-shadow: 0 0px 0px rgba(0,0,0,0); /* light shadow */
     font-size: 17px !important;
     font-weight: bold !important;
 }
@@ -266,4 +266,76 @@ margin-top: 15px !important;
     background-color: white; /* Optional: match Dialog background */
     z-index: 2;
     padding: 0.5rem;
+}
+#__form0--FC-NoHead--Grid {
+    background-color:  #c8d9e6 !important;
+}
+#__panel0-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel1-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel2-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel3-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel4-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel5-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel5-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel6-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel8-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel9-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel7-content{
+     background-color:  #c8d9e6 !important;
+}
+#__panel10-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel11-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel12-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel13-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel14-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel15-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel16-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel17-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel18-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel19-content {
+     background-color:  #c8d9e6 !important;
+}
+#__panel20-content {
+     background-color:  #c8d9e6 !important;
+}
+.stockDialog .sapMDialogSection{
+    background-color: #c8d9e6 !important; 
 }

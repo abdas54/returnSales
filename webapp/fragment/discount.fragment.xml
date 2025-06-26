@@ -1,6 +1,6 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:f="sap.f.cards"
 	xmlns:l="sap.ui.layout" xmlns:g="sap.f">
-	<Dialog title="Manual Discount" contentHeight="1000px" contentWidth="1000px">
+	<Dialog title="Manual Discount" contentHeight="1000px" contentWidth="1000px" class="stockDialog">
 		<content>
 			
 			
@@ -23,7 +23,7 @@
 							<VBox >
 							<g:GridList items="{SelectedItemsModel>/items}"   itemPress="holdDiscountItem">
     							<g:items>
-        							<g:GridListItem type="Active" highlight="Success">
+        							<g:GridListItem type="Active" >
             							<VBox class="sapUiSmallMargin">
             								
                 						<Title text="{SelectedItemsModel>Material}" />
@@ -41,7 +41,7 @@
 							<VBox >
 							<g:GridList  items="{ path: '/ManualDiscountsSet', filters: [{ path: 'Returns', operator: 'EQ', value1: 'X' }] }" itemPress="holdDiscountCondition" >
     							<g:items>
-        							<g:GridListItem type="Active" highlight="Success">
+        							<g:GridListItem type="Active" >
             							<VBox class="sapUiSmallMargin">
             								
                 						<Title text="{ConditionType}" />
@@ -59,7 +59,7 @@
 							<VBox >
 							<g:GridList items="{/DiscountReasonsSet}"  itemPress="holdReasonType">
     							<g:items>
-        							<g:GridListItem type="Active" highlight="Success">
+        							<g:GridListItem type="Active" >
             							<VBox class="sapUiSmallMargin">
             								
                 						<Title text="{Reason}" />
@@ -77,7 +77,7 @@
 							<VBox >
 							<g:GridList items="{/ApprovalAuthoritySet}"   itemPress="holdAuthority">
     							<g:items>
-        							<g:GridListItem type="Active" highlight="Success">
+        							<g:GridListItem type="Active" >
             							<VBox class="sapUiSmallMargin">
             								
                 						<Title text="{Authority}" />

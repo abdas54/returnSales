@@ -11,7 +11,7 @@
 
 				<g:GridList id="serialList" width="80%" items="{SerialModel>/serNumber}" class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop" mode="MultiSelect">
     							<g:items>
-        							<g:GridListItem type="Active" highlight="Success">
+        							<g:GridListItem type="Active" >
             							<VBox class="sapUiSmallMargin">
             								
                 						<Title text="{SerialModel>SerialId}" />

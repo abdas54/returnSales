@@ -30,7 +30,7 @@
 			</HBox>
 			<HBox width="100%">
            
-				<VBox width="80%" height="60%">
+				<VBox alignItems="Stretch" width="100%" height="60%">
                  <HBox class="sapUiSmallMarginTop">
                 <Input class="inputStyle sapUiSmallMarginBeginEnd" width="98%" id="salesTrans" change="getTransactionData" placeholder="Enter Sales Transaction Number">
                 <layoutData>
@@ -65,7 +65,7 @@
 									<Text text="Model No."/>
 								</Column>
 								
-								<Column width="5em" hAlign="Center">
+								<Column width="3em" hAlign="Center">
 									<Text text="Unit Price"/>
 								</Column>
 								
@@ -77,11 +77,11 @@
 								</Column> -->
 							
 								
-								<Column width="6em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+								<Column width="3em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
 									<Text text="Unit Discount"/>
 								</Column>
 							
-								<Column width="4em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
+								<Column width="3em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
 									<Text text="Serial No."/>
 								</Column>
 									<Column width="3em" hAlign="Center">
@@ -106,7 +106,9 @@
 									<Column width="4em" hAlign="Center">
 									<Text text="Return Total"/>
 								</Column>
-							
+							<Column width="8em" hAlign="Center">
+									<Text text="Reason"/>
+								</Column>
 							</columns>
 							<items>
 								<ColumnListItem type="Active">
@@ -130,7 +132,11 @@
 										<Text text="{ProductModel>returnDiscount}"/>
 										<Text text="{ProductModel>returnVATAmount}"/>
 										<Text text="{ProductModel>returnTotalAmount}"/>
-										
+										<VBox class="sapUiSmallMarginTop sapUiSmallMarginBottom ">
+										<ComboBox change="linkReason" items="{ path: '/ReturnReasonsSet'}">
+												<core:ListItem key="{Reason}" text="{Reason}" />
+											</ComboBox>
+										</VBox>
 									</cells>
 								</ColumnListItem>
 							</items>
@@ -138,7 +144,7 @@
 					</ScrollContainer>
 				</VBox>
             
-				<VBox width="20%">
+				<VBox >
 					<l:VerticalLayout class="sapUiContentPadding equalColumns" width="100%">
 						
 						

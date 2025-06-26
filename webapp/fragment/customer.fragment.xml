@@ -1,5 +1,5 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:f="sap.f.cards">
-	<Dialog title="Customer Details" contentHeight="400px" contentWidth="1000px">
+	<Dialog title="Customer Details" contentHeight="400px" contentWidth="1000px" class="stockDialog">
 		<content >
         <SearchField
                 id="phoneInput"

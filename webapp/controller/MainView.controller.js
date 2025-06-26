@@ -801,15 +801,15 @@ sap.ui.define([
 
             },
             calculateSalesAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
-                var netPrice = parseFloat(parseInt(parseFloat(netAmount).toFixed(2)) - parseInt(parseFloat(netDiscount).toFixed(2))).toFixed(2);
-                var vatAmount = parseFloat(parseInt(netPrice) * (parseInt(parseFloat(vatPercent).toFixed(2)) / 100)).toFixed(2);
+                var netPrice =  parseFloat(netAmount - netDiscount).toFixed(2);
+                var vatAmount = parseFloat(netPrice * (vatPercent)/100).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(vatAmount) + parseFloat(netPrice);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount).toFixed(2);
                 this.getView().getModel("ProductModel").refresh();
             },
             calculateVATAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
-                var netPrice = parseFloat(parseInt(parseFloat(netAmount).toFixed(2)) - parseInt(parseFloat(netDiscount).toFixed(2))).toFixed(2);
-                var vatAmount = parseFloat(parseInt(netPrice) * (parseInt(parseFloat(vatPercent).toFixed(2)) / 100)).toFixed(2);
+                var netPrice =  parseFloat(netAmount - netDiscount).toFixed(2);
+                var vatAmount = parseFloat(netPrice * (vatPercent)/100).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatAmount = vatAmount;
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnVATAmount = vatAmount;
                 this.getView().getModel("ProductModel").refresh();
@@ -1182,7 +1182,19 @@ sap.ui.define([
                     const serialList = this._serialStore[material].serials;
                     totalCount += serialList.length;
                 }
+                this.aMissingReasonItems = [];
+                this.aMissingReturnQty =[];
+                aSelectedItems.forEach(function (oItem) {
+                    var oContext = oItem.getBindingContext("ProductModel");
+                    var oData = oContext.getObject();
 
+                    if (!oData.Reason || oData.Reason.trim() === "") {
+                        that.aMissingReasonItems.push(oData.Itemcode);
+                    }
+                    if(oData.returnQty === 0){
+                         that.aMissingReturnQty.push(oData.Itemcode);
+                    }
+                });
                 if(aSelectedItems.length === 0){
                     bFlag = false;
                     sap.m.MessageBox.error("Kindly select item to Return");
@@ -1201,6 +1213,16 @@ sap.ui.define([
                   
 
                 }
+                else if(that.aMissingReasonItems.length > 0) {
+                    bFlag = false;
+                    sap.m.MessageBox.error("Kindly Select Reason Code for the Selected Item")
+                    
+                }
+                else if(that.aMissingReturnQty.length > 0) {
+                    bFlag = false;
+                    sap.m.MessageBox.error("Kindly enter the return qty for the Selected Item")
+                    
+                }
                 else {
                     bFlag = true;
                    
@@ -1209,11 +1231,33 @@ sap.ui.define([
                 return bFlag;
 
             },
+            checkReasonCode: function () {
+                var that = this;
+                var oTable = this.byId("idProductsTable");
+                var aItems = oTable.getSelectedItems();
+                var oModel = this.getView().getModel("ProductModel");
+                this.aMissingReasonItems = [];
+                aItems.forEach(function (oItem) {
+                    var oContext = oItem.getBindingContext("ProductModel");
+                    var oData = oContext.getObject();
+
+                    if (!oData.Reason || oData.Reason.trim() === "") {
+                        that.aMissingReasonItems.push(oData.Itemcode);
+                    }
+                });
+                if (that.aMissingReasonItems.length > 0) {
+                    sap.m.MessageBox.error("Kindly Select Reason Code for the Selected Item")
+                    return false;
+                }
+                else {
+                    return true;
+                }
+
+            },
             onPressReturn: function (oEvent) {
                 var that = this;
-                // this.oEvent = oEvent.getSource();
-                var bFlag = this.validateReturn();
-                if(bFlag){
+                
+                
                 var oPayload = {
                     "TransactionId": "",
                     "TransactionDate": new Date(),//new Date().toISOString().slice(0, 10).replace(/-/g, ''),
@@ -1273,7 +1317,7 @@ sap.ui.define([
                         sap.m.MessageToast.show("Error");
                     }
                 });
-            }
+          
 
 
 
@@ -1341,7 +1385,8 @@ sap.ui.define([
                             "SalesmanId": itemData.SalesmanId,
                             "SalesmanName": itemData.SalesmanName,
                             "OriginalTransactionId": itemData.TransactionId,
-                            "OriginalTransactionItem": itemData.TransactionItem
+                            "OriginalTransactionItem": itemData.TransactionItem,
+                            "Reason": itemData.Reason
                         })
                     }
 
@@ -1352,7 +1397,11 @@ sap.ui.define([
                 }
             },
             onPressReturn1: function(){
+                 var bFlag = this.validateReturn();
+               
+                if(bFlag){
                 this.OnSignaturePress();
+                }
             },
                  OnSignaturePress: function () {
                 var that = this,
@@ -1518,6 +1567,25 @@ sap.ui.define([
                     that.onPressReturn(true);},1000)
 
 
+            },
+             linkReason: function (oEvent) {
+                var oComboBox = oEvent.getSource();
+                var oSelectedItem = oComboBox.getSelectedItem();
+
+                if (!oSelectedItem) {
+                    return;
+                }
+
+                var sReasonCode = oSelectedItem.getKey();
+              
+                var oContext = oComboBox.getBindingContext("ProductModel");
+                if (oContext) {
+                    var sPath = oContext.getPath(); // e.g., /Product/0
+                    var oModel = oContext.getModel();
+                    oModel.setProperty(sPath + "/Reason", sReasonCode);
+                 
+
+                }
             },
             validateSerialStoreMaterials: function () {
                 const serialStoreMaterials = Object.keys(this._serialStore); // materials from the store
