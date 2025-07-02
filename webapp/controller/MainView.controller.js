@@ -53,23 +53,23 @@ sap.ui.define([
                 this.aReturnSerialsNo = [];
                 this.aEntries1 = [];
                 this._serialStore = {};
-                 this.cashierID ="";
-                this.CashierPwd="";
+                this.cashierID = "";
+                this.CashierPwd = "";
 
             },
-            enableValidateBtn: function(oEvent){
-                if(oEvent.getSource().getId() === "cashId"){
+            enableValidateBtn: function (oEvent) {
+                if (oEvent.getSource().getId() === "cashId") {
                     this.cashierID = oEvent.getSource().getValue();
                 }
-                else if(oEvent.getSource().getId() === "casPwd"){
+                else if (oEvent.getSource().getId() === "casPwd") {
                     this.CashierPwd = oEvent.getSource().getValue();
                 }
 
-                
-                if(this.cashierID.length > 0 && this.CashierPwd.length > 0){
+
+                if (this.cashierID.length > 0 && this.CashierPwd.length > 0) {
                     sap.ui.getCore().byId("validatebtn").setEnabled(true);
                 }
-                else{
+                else {
                     sap.ui.getCore().byId("validatebtn").setEnabled(false);
                 }
             },
@@ -171,10 +171,10 @@ sap.ui.define([
                 var oModel = new sap.ui.model.json.JSONModel({
                     customerData: [{
                         option: "Basic Information",
-                        icon : "sap-icon://add-contact"
+                        icon: "sap-icon://add-contact"
                     }, {
                         option: "Customer Address",
-                         icon : "sap-icon://database"
+                        icon: "sap-icon://database"
                     }]
                 });
                 this.getView().setModel(oModel, "CustModel");
@@ -320,7 +320,7 @@ sap.ui.define([
                     errorMessage += "Customer Type is required.\n";
                 }
 
-              
+
 
 
                 // Show message if there are errors
@@ -438,10 +438,10 @@ sap.ui.define([
             onCustomerTypeChange: function (oEvent) {
 
                 if (oEvent.getParameter("selectedItem").getProperty("key") === "2") {
-                   
+
                 }
                 else {
-                    
+
                 }
 
             },
@@ -489,6 +489,9 @@ sap.ui.define([
                         aItems.forEach(item => {
                             var itemId = item.TransactionItem;
                             item.returnQty = 0;
+                            if (that.mainData.CustomerType === "TOURIST") {
+                                item.returnQty = parseInt(item.Quantity);
+                            }
                             item.returnAmount = "0.00";
                             item.returnDiscount = "0.00";
                             item.returnTotalAmount = "0.00";
@@ -510,6 +513,26 @@ sap.ui.define([
                         if (that.getView().getModel("discountModelTable")) {
                             that.getView().getModel("discountModelTable").setProperty("/entries", []);
                         }
+                        if (that.mainData.CustomerType === "TOURIST") {
+                            that.onUpdateTableData();
+                        }
+                        else {
+                            var oTable1 = that.byId("idProductsTable");
+                            var aItems1 = oTable1.getItems();
+
+                            aItems1.forEach(function (oItem) {
+                                var aCells = oItem.getCells();
+
+                                // The HBox is at the 8th cell (index 7 if zero-based)
+                                var oHBox = aCells[6]; // adjust index based on actual column order
+                                if (oHBox && oHBox instanceof sap.m.HBox) {
+                                    var aHBoxItems = oHBox.getItems();
+                                    aHBoxItems[0].setEnabled(true);
+                                    aHBoxItems[2].setEnabled(true);
+                                    aHBoxItems[1].setEnabled(true);
+                                }
+                            });
+                        }
                     },
                     error: function (oError) {
                         sap.m.MessageBox.show(
@@ -524,6 +547,44 @@ sap.ui.define([
                         );
 
 
+                    }
+                });
+            },
+            onSelectionChange: function () {
+                if (this._selectionLocked) {
+                    var oTable = this.byId("idProductsTable");
+                    var aItems = oTable.getItems();
+
+                    // Re-select all items to prevent deselection
+                    aItems.forEach(function (oItem) {
+                        oTable.setSelectedItem(oItem, true);
+                    });
+
+                }
+            },
+            onUpdateTableData: function () {
+                var oTable = this.byId("idProductsTable");
+                var aItems = oTable.getItems();
+                this._selectionLocked = true;
+                aItems.forEach(function (oItem) {
+                    oTable.setSelectedItem(oItem, true);
+                    var aCells = oItem.getCells();
+
+                    // The HBox is at the 8th cell (index 7 if zero-based)
+                    var oHBox = aCells[6]; // adjust index based on actual column order
+                    if (oHBox && oHBox instanceof sap.m.HBox) {
+                        var aHBoxItems = oHBox.getItems();
+                        aHBoxItems[0].setEnabled(false);
+                        aHBoxItems[2].setEnabled(false);
+                        // Assuming the Input is the second item in HBox
+                        var oInput = aHBoxItems[1];
+                        oInput.setEnabled(false);
+                        if (oInput && oInput instanceof sap.m.Input) {
+                            // Manually fire change event
+                            oInput.fireChange({
+                                value: oInput.getValue()
+                            });
+                        }
                     }
                 });
             },
@@ -584,18 +645,60 @@ sap.ui.define([
                     const oList = sap.ui.getCore().byId("serialList");
                     const items = oList.getItems();
 
-                    items.forEach(item => {
-                        const ctx = item.getBindingContext("SerialModel");
-                        if (!ctx) return;
+                    if (that.mainData.CustomerType === "TOURIST") {
+                        items.forEach(item => {
+                            item.setSelected(true);
+                            item.setType("Inactive"); // Prevents item click if needed
+                        });
 
-                        const serialId = ctx.getProperty("SerialId");
-                        const isSelected = savedSerials.some(s => s.SerialId === serialId);
-                        item.setSelected(isSelected);
-                    });
+                        // Lock selection change
+                        oList.attachSelectionChange(this._onLockedSelectionChange, this);
+                        that.onPressSaveReturnTouristSerial();
+                    }
+                    else {
+                        items.forEach(item => {
+                            const ctx = item.getBindingContext("SerialModel");
+                            if (!ctx) return;
+
+                            const serialId = ctx.getProperty("SerialId");
+                            const isSelected = savedSerials.some(s => s.SerialId === serialId);
+                            item.setSelected(isSelected);
+                        });
+                    }
+
+
                 }, 200);
+            },
+            _onLockedSelectionChange: function (oEvent) {
+                const oList = oEvent.getSource();
+
+                // Re-select all items forcibly
+                const items = oList.getItems();
+                items.forEach(item => item.setSelected(true));
+
             },
             onCloseReturnSerial: function () {
                 this._oSerialDialog.close();
+            },
+             onPressSaveReturnTouristSerial: function () {
+                const oList = sap.ui.getCore().byId("serialList");
+                const aSelectedItems = oList.getSelectedItems();
+                const selectedSerials = aSelectedItems.map(item => {
+                    const oCtx = item.getBindingContext("SerialModel");
+                    return {
+                        SerialId: oCtx.getProperty("SerialId"),
+                        SerialNo: oCtx.getProperty("SerialNo")
+                    };
+                });
+
+                const material = this._selectedItem.Material;
+                this._serialStore[material] = {
+                    transactionItem: this._selectedItem.TransactionItem,
+                    serials: selectedSerials
+                };
+
+       
+
             },
             onPressSaveReturnSerial: function () {
                 const oList = sap.ui.getCore().byId("serialList");
@@ -681,7 +784,7 @@ sap.ui.define([
             },
             onManualChangeQty: function (oEvent) {
                 var event = oEvent;
-                var qty = oEvent.getParameter("newValue");
+                var qty = oEvent.getParameter("newValue") ? oEvent.getParameter("newValue") : oEvent.getParameter("value");
                 var selIndex = oEvent.getSource().getParent().getId().split("--")[2].split("-")[1];
                 var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
                 var actQuantity = selIndexData.Quantity;
@@ -801,15 +904,15 @@ sap.ui.define([
 
             },
             calculateSalesAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
-                var netPrice =  parseFloat(netAmount - netDiscount).toFixed(2);
-                var vatAmount = parseFloat(netPrice * (vatPercent)/100).toFixed(2);
+                var netPrice = parseFloat(netAmount - netDiscount).toFixed(2);
+                var vatAmount = parseFloat(netPrice * (vatPercent) / 100).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(vatAmount) + parseFloat(netPrice);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount).toFixed(2);
                 this.getView().getModel("ProductModel").refresh();
             },
             calculateVATAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
-                var netPrice =  parseFloat(netAmount - netDiscount).toFixed(2);
-                var vatAmount = parseFloat(netPrice * (vatPercent)/100).toFixed(2);
+                var netPrice = parseFloat(netAmount - netDiscount).toFixed(2);
+                var vatAmount = parseFloat(netPrice * (vatPercent) / 100).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatAmount = vatAmount;
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnVATAmount = vatAmount;
                 this.getView().getModel("ProductModel").refresh();
@@ -854,22 +957,22 @@ sap.ui.define([
                     var oModel = new sap.ui.model.json.JSONModel({
                         DiscountList: [{
                             option: "Item List",
-                             icon : "sap-icon://activities"
+                            icon: "sap-icon://activities"
                         }, {
                             option: "Discounts Condition",
-                             icon : "sap-icon://blank-tag-2"
+                            icon: "sap-icon://blank-tag-2"
                         }, {
                             option: "Reason Type",
-                              icon : "sap-icon://cause"
+                            icon: "sap-icon://cause"
                         }, {
                             option: "Authority",
-                             icon : "sap-icon://employee"
+                            icon: "sap-icon://employee"
                         }, {
                             option: "Amount",
-                             icon : "sap-icon://money-bills"
+                            icon: "sap-icon://money-bills"
                         }, {
                             option: "View All Records",
-                             icon : "sap-icon://sum"
+                            icon: "sap-icon://sum"
                         }]
                     });
                     this.getView().setModel(oModel, "DiscountModel");
@@ -1161,7 +1264,7 @@ sap.ui.define([
 
                 return `PT${hours}H${minutes}M${seconds}S`;
             },
-            validateReturn: function(){
+            validateReturn: function () {
                 var oTable = this.byId("idProductsTable");
                 var aSelectedItems = oTable.getSelectedItems();
                 var oModel = this.getView().getModel("ProductModel");
@@ -1175,7 +1278,7 @@ sap.ui.define([
                     var oData = oContext.getObject();
                     if (oData.SerialNumbers) {
                         bHasSerializedItemSelected = true;
-                        iTotalReturnQty += parseFloat(oData.returnQty);   
+                        iTotalReturnQty += parseFloat(oData.returnQty);
                     }
                 });
                 for (const material in this._serialStore) {
@@ -1183,7 +1286,7 @@ sap.ui.define([
                     totalCount += serialList.length;
                 }
                 this.aMissingReasonItems = [];
-                this.aMissingReturnQty =[];
+                this.aMissingReturnQty = [];
                 aSelectedItems.forEach(function (oItem) {
                     var oContext = oItem.getBindingContext("ProductModel");
                     var oData = oContext.getObject();
@@ -1191,41 +1294,41 @@ sap.ui.define([
                     if (!oData.Reason || oData.Reason.trim() === "") {
                         that.aMissingReasonItems.push(oData.Itemcode);
                     }
-                    if(oData.returnQty === 0){
-                         that.aMissingReturnQty.push(oData.Itemcode);
+                    if (oData.returnQty === 0) {
+                        that.aMissingReturnQty.push(oData.Itemcode);
                     }
                 });
-                if(aSelectedItems.length === 0){
+                if (aSelectedItems.length === 0) {
                     bFlag = false;
                     sap.m.MessageBox.error("Kindly select item to Return");
-                    
-                }
-                else if(bHasSerializedItemSelected){
-                    if(iTotalReturnQty !== totalCount || iTotalReturnQty === 0 || totalCount === 0){
-                        bFlag = false;
-                        sap.m.MessageBox.error("Enter the serial number for the given return qty for all the selected return items.");
-                       
-                    }
-                }
-                else if(qty === 0 || qty === ""){
-                    bFlag = false;
-                    sap.m.MessageBox.error("Enter the return qty for all the selected return items.");
-                  
 
                 }
-                else if(that.aMissingReasonItems.length > 0) {
+                else if (bHasSerializedItemSelected) {
+                    if (iTotalReturnQty !== totalCount || iTotalReturnQty === 0 || totalCount === 0) {
+                        bFlag = false;
+                        sap.m.MessageBox.error("Enter the serial number for the given return qty for all the selected return items.");
+
+                    }
+                }
+                else if (qty === 0 || qty === "") {
+                    bFlag = false;
+                    sap.m.MessageBox.error("Enter the return qty for all the selected return items.");
+
+
+                }
+                else if (that.aMissingReasonItems.length > 0) {
                     bFlag = false;
                     sap.m.MessageBox.error("Kindly Select Reason Code for the Selected Item")
-                    
+
                 }
-                else if(that.aMissingReturnQty.length > 0) {
+                else if (that.aMissingReturnQty.length > 0) {
                     bFlag = false;
                     sap.m.MessageBox.error("Kindly enter the return qty for the Selected Item")
-                    
+
                 }
                 else {
                     bFlag = true;
-                   
+
                 }
 
                 return bFlag;
@@ -1256,8 +1359,8 @@ sap.ui.define([
             },
             onPressReturn: function (oEvent) {
                 var that = this;
-                
-                
+
+
                 var oPayload = {
                     "TransactionId": "",
                     "TransactionDate": new Date(),//new Date().toISOString().slice(0, 10).replace(/-/g, ''),
@@ -1288,7 +1391,12 @@ sap.ui.define([
                     "ToDiscounts": { "results": this.oPayloadTableDiscountItems() },
                     "ToPayments": { "results": this.oPayloadPayments() },
                     "ToSerials": { "results": this.oPayloadSerialNumber() },
-                    "Remarks": ""
+                    "ToSignature": { "results": this.oPaySignatureload },
+                    "Remarks": "",
+                    "VATRefundQRCode": that.mainData.VATRefundQRCode,
+                    "VATRefundTag": that.mainData.VATRefundTag,
+                    "PlanetURL": that.mainData.PlanetURL,
+                    "CustomerType": that.mainData.CustomerType
 
                 }
 
@@ -1297,12 +1405,12 @@ sap.ui.define([
                     success: function (oData) {
                         that.getView().byId("tranNumber").setCount(oData.TransactionId);
                         that.getView().setBusy(false);
-                         that._pAddRecordDialog.then(
-                    function (oValueHelpDialog) {
-                     
-                        oValueHelpDialog.setBusy(false);
-                    }.bind(that)
-                );
+                        that._pAddRecordDialog.then(
+                            function (oValueHelpDialog) {
+
+                                oValueHelpDialog.setBusy(false);
+                            }.bind(that)
+                        );
                         // that.oEvent.setPressEnabled(true);
                         MessageBox.success("Item has been successfully returned.", {
                             onClose: function (sAction) {
@@ -1312,12 +1420,12 @@ sap.ui.define([
 
                     },
                     error: function (oError) {
-                        that.oEvent.setPressEnabled(true);
+
                         that.getView().setBusy(false);
                         sap.m.MessageToast.show("Error");
                     }
                 });
-          
+
 
 
 
@@ -1370,7 +1478,7 @@ sap.ui.define([
                             "Location": itemData.Location,
                             "Material": itemData.Material,
                             "Description": itemData.Description,
-                            "Quantity": itemData.returnQty,
+                            "Quantity": itemData.returnQty.toString(),
                             "Unit": "EA",
                             "UnitPrice": itemData.UnitPrice,
                             "UnitDiscount": itemData.UnitDiscount,
@@ -1396,14 +1504,14 @@ sap.ui.define([
                     MessageBox.error("Kindly select the Item to Return and also filled the Return Quantity");
                 }
             },
-            onPressReturn1: function(){
-                 var bFlag = this.validateReturn();
-               
-                if(bFlag){
-                this.OnSignaturePress();
+            onPressReturn1: function () {
+                var bFlag = this.validateReturn();
+
+                if (bFlag) {
+                    this.OnSignaturePress();
                 }
             },
-                 OnSignaturePress: function () {
+            OnSignaturePress: function () {
                 var that = this,
                     oView = this.getView();
                 if (!this._pAddRecordDialog) {
@@ -1451,12 +1559,12 @@ sap.ui.define([
 
                 return this.serialNumber;
             },
-                 onClear: function () {
+            onClear: function () {
                 sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePad").clear();
                 sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePadCash").clear();
-               
+
             },
-             onDialogClose: function () {
+            onDialogClose: function () {
                 this.onClear();
                 this._pAddRecordDialog.then(
                     function (oValueHelpDialog) {
@@ -1464,10 +1572,10 @@ sap.ui.define([
                     }.bind(this)
                 );
 
-               
+
 
             },
-               onSave: function () {
+            onSave: function () {
                 var that = this,
                     token,
                     dataUrl,
@@ -1563,12 +1671,13 @@ sap.ui.define([
                         oValueHelpDialog.setBusy(true);
                     }.bind(that)
                 );
-                setTimeout(function(){
-                    that.onPressReturn(true);},1000)
+                setTimeout(function () {
+                    that.onPressReturn(true);
+                }, 1000)
 
 
             },
-             linkReason: function (oEvent) {
+            linkReason: function (oEvent) {
                 var oComboBox = oEvent.getSource();
                 var oSelectedItem = oComboBox.getSelectedItem();
 
@@ -1577,13 +1686,13 @@ sap.ui.define([
                 }
 
                 var sReasonCode = oSelectedItem.getKey();
-              
+
                 var oContext = oComboBox.getBindingContext("ProductModel");
                 if (oContext) {
                     var sPath = oContext.getPath(); // e.g., /Product/0
                     var oModel = oContext.getModel();
                     oModel.setProperty(sPath + "/Reason", sReasonCode);
-                 
+
 
                 }
             },

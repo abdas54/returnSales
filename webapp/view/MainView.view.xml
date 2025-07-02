@@ -46,7 +46,7 @@
 				</HBox>
                 <ScrollContainer class="sapUiSmallMarginTop sapUiSmallMarginBegin" horizontal="false" height="550px" vertical="true">
 						<Table id="idProductsTable"  items="{ProductModel>/items}" mode="MultiSelect"  sticky="ColumnHeaders"
-							itemPress="onProductRowPress">
+							itemPress="onProductRowPress" selectionChange="onSelectionChange">
 							<headerToolbar>
 			<OverflowToolbar>
 				<content>
