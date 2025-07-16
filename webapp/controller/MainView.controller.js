@@ -713,8 +713,8 @@ sap.ui.define([
 
                 const returnQty = parseInt(this._selectedItem.returnQty || "0", 10);
                 if (selectedSerials.length !== returnQty) {
-                    sap.m.MessageBox.error(`Please select exactly ${returnQty} serial numbers.`);
-                    return;
+                    sap.m.MessageBox.warning(`Please select exactly ${returnQty} serial numbers.`);
+                    // return;
                 }
 
                 const material = this._selectedItem.Material;
@@ -1303,14 +1303,14 @@ sap.ui.define([
                     sap.m.MessageBox.error("Kindly select item to Return");
 
                 }
-                else if (bHasSerializedItemSelected) {
-                    if (iTotalReturnQty !== totalCount || iTotalReturnQty === 0 || totalCount === 0) {
-                        bFlag = false;
-                        sap.m.MessageBox.error("Enter the serial number for the given return qty for all the selected return items.");
+                // else if (bHasSerializedItemSelected) {
+                //     if (iTotalReturnQty !== totalCount || iTotalReturnQty === 0 || totalCount === 0) {
+                //         bFlag = false;
+                //         sap.m.MessageBox.error("Enter the serial number for the given return qty for all the selected return items.");
 
-                    }
-                }
-                else if (qty === 0 || qty === "") {
+                //     }
+                // }
+                else if (qty === 0 || qty === "" || qty === "0") {
                     bFlag = false;
                     sap.m.MessageBox.error("Enter the return qty for all the selected return items.");
 
