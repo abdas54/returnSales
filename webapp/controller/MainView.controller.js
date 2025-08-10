@@ -680,7 +680,7 @@ sap.ui.define([
             onCloseReturnSerial: function () {
                 this._oSerialDialog.close();
             },
-             onPressSaveReturnTouristSerial: function () {
+            onPressSaveReturnTouristSerial: function () {
                 const oList = sap.ui.getCore().byId("serialList");
                 const aSelectedItems = oList.getSelectedItems();
                 const selectedSerials = aSelectedItems.map(item => {
@@ -697,7 +697,7 @@ sap.ui.define([
                     serials: selectedSerials
                 };
 
-       
+
 
             },
             onPressSaveReturnSerial: function () {
@@ -1373,7 +1373,7 @@ sap.ui.define([
                     "Plant": that.plantID,
                     "CashierId": that.cashierID,
                     "CashierName": that.cashierName,
-                    "TransactionType": "2",
+                    "TransactionType": this.transactionType,
                     "ShippingMethod": "",
                     "GrossAmount": this.getView().byId("gross").getCount().toString(),
                     "Discount": this.getView().byId("discount").getCount().toString().replace("-", ""),
@@ -1383,6 +1383,8 @@ sap.ui.define([
                     "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(), // Required for Return Sales
                     "CustomerName": this.getView().byId("customer").getCount(),
                     "ContactNo": that.mainData.ContactNo,
+                    "CountryCode": that.mainData.CountryCode,
+                    "Mobile": that.mainData.Mobile,
                     "EMail": that.mainData.EMail,
                     "Address": that.mainData.Address,
                     "ShippingInstruction": "",
@@ -1505,8 +1507,37 @@ sap.ui.define([
                 }
             },
             onPressReturn1: function () {
-                var bFlag = this.validateReturn();
 
+                if (!this._oDialog) {
+                    Fragment.load({
+                        name: "com.eros.returnsales.fragment.genericTileDialog",
+                        controller: this
+                    }).then(function (oFragment) {
+                        this._oDialog = oFragment;
+                        this.getView().addDependent(this._oDialog);
+                        this._oDialog.open();
+                    }.bind(this));
+                } else {
+                    this._oDialog.open();
+                }
+
+
+
+
+            },
+            onCloseDialog: function (oEvent) {
+                var sSelectedOption = oEvent.getSource().getProperty("header");
+                this.transactionType = "";
+                if (sSelectedOption === "CREDIT NOTE") {
+                    this.transactionType = "2";
+                }
+                if (sSelectedOption === "CREDIT NOTE DRAFT") {
+                    this.transactionType = "5";
+                }
+                if (this._oDialog) {
+                    this._oDialog.close();
+                }
+                var bFlag = this.validateReturn();
                 if (bFlag) {
                     this.OnSignaturePress();
                 }

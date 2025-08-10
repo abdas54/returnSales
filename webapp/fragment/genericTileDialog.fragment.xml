@@ -1,0 +1,17 @@
+<core:FragmentDefinition xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:generic="sap.m">
+    <Dialog  title="Select" contentWidth="400px" contentHeight="200px">
+        <HBox justifyContent="Start" wrap="Wrap" class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop sapUiSmallMarginBottom">
+            
+
+            <GenericTile header="CREDIT NOTE" frameType="OneByHalf" press="onCloseDialog" class="customTile sapUiSmallMarginEnd" >
+							
+						</GenericTile>
+						<GenericTile header="CREDIT NOTE DRAFT" frameType="OneByHalf" press="onCloseDialog" class="customTile" >
+							
+						</GenericTile>
+        </HBox>
+       
+    </Dialog>
+</core:FragmentDefinition>
