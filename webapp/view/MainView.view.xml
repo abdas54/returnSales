@@ -58,7 +58,7 @@
 			</OverflowToolbar>
 		</headerToolbar>
 							<columns>
-								<Column width="3em">
+								<Column visible="false" >
 									<Text text="Seq."/>
 								</Column>
 								<Column width="4em">
@@ -84,29 +84,37 @@
 								<Column width="3em" hAlign="Center" minScreenWidth="Tablet" demandPopin="true">
 									<Text text="Serial No."/>
 								</Column>
-									<Column width="3em" hAlign="Center">
-									<Text text="Quantity"/>
+									<Column width="2em" hAlign="Center">
+									<Text text="Qty"/>
 								</Column>
 								<Column width="4em" hAlign="Center">
 									<Text text="Return Qty."/>
 								</Column>
 							
-									<Column width="4em" hAlign="Center">
+									<Column width="3em" hAlign="Center">
 									<Text text="Return Price"/>
 								</Column>
 						
-									<Column width="4em" hAlign="Center">
+									<Column width="3em" hAlign="Center">
 									<Text text="Return Discount"/>
 								</Column>
+
+								<Column width="3em" hAlign="Center">
+									<Text text="Re-stock"/>
+								</Column>
+
+								<Column width="3em" hAlign="Center">
+									<Text text="Restocking Fee"/>
+								</Column>
 								
-									<Column width="4em" hAlign="Center">
+								<Column width="3em" hAlign="Center">
 									<Text text="Return VAT"/>
 								</Column>
 								
-									<Column width="4em" hAlign="Center">
+									<Column width="3em" hAlign="Center">
 									<Text text="Return Total"/>
 								</Column>
-							<Column width="8em" hAlign="Center">
+							<Column width="6em" hAlign="Center">
 									<Text text="Reason"/>
 								</Column>
 							</columns>
@@ -130,6 +138,8 @@
 										</HBox>
 										<Text text="{ProductModel>returnAmount}"/>
 										<Text text="{ProductModel>returnDiscount}"/>
+										<CheckBox selected="{ProductModel>restockingInd}" select="onRestockSelect"></CheckBox>
+										<Input enabled="false" value="{ProductModel>restockingFee}" />
 										<Text text="{ProductModel>returnVATAmount}"/>
 										<Text text="{ProductModel>returnTotalAmount}"/>
 										<VBox class="sapUiSmallMarginTop sapUiSmallMarginBottom ">

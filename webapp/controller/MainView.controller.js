@@ -497,6 +497,8 @@ sap.ui.define([
                             item.returnTotalAmount = "0.00";
                             item.returnVATAmount = "0.00";
                             item.returnUnitDiscount = item.UnitDiscount;
+                            item.restockingInd = false;
+                            item.restockingFee = "";
                             var serialsForItem = mSerialsByItem[itemId] || [];
 
                             // Add boolean as string
@@ -731,6 +733,8 @@ sap.ui.define([
                 var selIndex = oEvent.getSource().getId().split("--")[2].split("-")[1];
                 var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
                 var actQuantity = selIndexData.Quantity;
+                selIndexData.restockingFee = "";
+                selIndexData.restockingInd = false;
                 var qtyValue = oEvent.getSource().getEventingParent().getItems()[1].getValue();
                 var iValue = parseInt(qtyValue, 10) || 0;
                 if (iValue > 0) {
@@ -788,6 +792,8 @@ sap.ui.define([
                 var selIndex = oEvent.getSource().getParent().getId().split("--")[2].split("-")[1];
                 var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
                 var actQuantity = selIndexData.Quantity;
+                selIndexData.restockingFee = "";
+                selIndexData.restockingInd = false;
 
 
 
@@ -802,7 +808,7 @@ sap.ui.define([
                             selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
                         }
                         else {
-                            selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.returnDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
+                            selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
                         }
                         //selIndexData.returnDiscount = parseFloat(parseFloat(selIndexData.UnitDiscount).toFixed(2) * parseFloat(iValue).toFixed(2)).toFixed(2);
 
@@ -851,6 +857,8 @@ sap.ui.define([
                 var selIndex = oEvent.getSource().getId().split("--")[2].split("-")[1];
                 var selIndexData = this.getView().getModel("ProductModel").getObject("/items/" + selIndex);
                 var actQuantity = selIndexData.Quantity;
+                selIndexData.restockingFee = "";
+                selIndexData.restockingInd = false;
                 var qtyValue = oEvent.getSource().getEventingParent().getItems()[1].getValue();
                 var iValue = parseInt(qtyValue, 10) || 0;
 
@@ -925,14 +933,24 @@ sap.ui.define([
                 var totalVAT = 0;
                 var totalDiscount = 0;
                 var totalGross = 0;
+                var totalRestockingFee= 0;
                 for (var count = 0; count < productTblData.length; count++) {
                     totalPrice = parseFloat(parseFloat(totalPrice) + parseFloat(productTblData[count].returnTotalAmount)).toFixed(2);
-                    totalGross = parseFloat(parseFloat(totalGross) + parseFloat(productTblData[count].returnAmount)).toFixed(2)
+                    totalGross = parseFloat(parseFloat(totalGross) + parseFloat(productTblData[count].returnAmount)).toFixed(2);
                     totalQty = totalQty + parseInt(productTblData[count].returnQty);
                     totalVAT = parseFloat(parseFloat(totalVAT) + parseFloat(productTblData[count].returnVATAmount)).toFixed(2);
-                    totalDiscount = parseFloat(parseFloat(totalDiscount) + parseFloat(productTblData[count].returnDiscount)).toFixed(2)
+                    totalDiscount = parseFloat(parseFloat(totalDiscount) + parseFloat(productTblData[count].returnDiscount)).toFixed(2);
+                    if(productTblData[count].restockingFee === ""){
+                      totalRestockingFee = parseFloat(parseFloat(totalRestockingFee) + parseFloat("0.00")).toFixed(2);
+                    }
+                    else{
+                        totalRestockingFee = parseFloat(parseFloat(totalRestockingFee) + parseFloat(productTblData[count].restockingFee)).toFixed(2);
+                    }
+                    
                 }
-                this.getView().byId("saleAmount").setCount(totalPrice);
+                this.totalRestockFee = totalRestockingFee;
+                var totalUpdPrice = totalPrice - totalRestockingFee;
+                this.getView().byId("saleAmount").setCount(parseFloat(totalUpdPrice).toFixed(2));
                 this.getView().byId("qty").setCount(totalQty);
                 this.getView().byId("vat").setCount(totalVAT);
                 this.getView().byId("gross").setCount(totalGross);
@@ -1359,7 +1377,13 @@ sap.ui.define([
             },
             onPressReturn: function (oEvent) {
                 var that = this;
-
+                var restockFee;
+                if(that.totalRestockFee === ""){
+                    restockFee = null;
+                }
+                else{
+                    restockFee = that.totalRestockFee;
+                }
 
                 var oPayload = {
                     "TransactionId": "",
@@ -1398,7 +1422,8 @@ sap.ui.define([
                     "VATRefundQRCode": that.mainData.VATRefundQRCode,
                     "VATRefundTag": that.mainData.VATRefundTag,
                     "PlanetURL": that.mainData.PlanetURL,
-                    "CustomerType": that.mainData.CustomerType
+                    "CustomerType": that.mainData.CustomerType,
+                    "RestockingFee" : restockFee
 
                 }
 
@@ -1473,6 +1498,13 @@ sap.ui.define([
 
                     for (var count = 0; count < tableData.length; count++) {
                         var itemData = tableData[count].getModel().getObject(tableData[count].sPath);
+                        var restockFee ;
+                        if(itemData.restockingFee === ""){
+                            restockFee = null;
+                        }
+                        else{
+                            restockFee = itemData.restockingFee;
+                        }
                         itemArr.push({
                             "TransactionId": "",
                             "TransactionItem": itemData.TransactionItem,
@@ -1496,7 +1528,9 @@ sap.ui.define([
                             "SalesmanName": itemData.SalesmanName,
                             "OriginalTransactionId": itemData.TransactionId,
                             "OriginalTransactionItem": itemData.TransactionItem,
-                            "Reason": itemData.Reason
+                            "Reason": itemData.Reason,
+                            "RestockingIndicator": itemData.restockingInd ? "X" : "",
+                            "RestockingFee" : restockFee
                         })
                     }
 
@@ -1750,7 +1784,92 @@ sap.ui.define([
                 }
 
                 return true;
+            },
+            onRestockSelect: function (oEvent) {
+                var bSelected = oEvent.getParameter("selected");
+                var oContext = oEvent.getSource().getBindingContext("ProductModel");
+                var oModel = oContext.getModel();
+                var oData = oContext.getObject();
+                var oView = this.getView();
+
+                if(oData.returnQty === 0 || oData.returnQty === "0.00"){
+                 sap.m.MessageToast.show("Please select the Return Quanity");
+                 oModel.setProperty("restockingInd", false, oContext);
+                 oModel.setProperty("restockingFee", "", oContext);
+                }
+                else{
+                if (bSelected) {
+                    var oTempModel = new sap.ui.model.json.JSONModel({
+                        selectedItem: Object.assign({}, oData) // copy of row data
+                    });
+
+                    if (!this._oRestockDialog) {
+                        Fragment.load({
+                            name: "com.eros.returnsales.fragment.RestockDialog",
+                            controller: this
+                        }).then(function (oFragment) {
+                            this._oRestockDialog = oFragment;
+                            this.getView().addDependent(this._oRestockDialog);
+
+                            // ✅ set model here, after fragment exists
+                            this._oRestockDialog.setModel(oTempModel, "dialog");
+                            this._oRestockDialog.open();
+
+                            this._oRestockContext = oContext;
+                        }.bind(this));
+                    } else {
+                        // reuse existing fragment
+                        this._oRestockDialog.setModel(oTempModel, "dialog");
+                        this._oRestockDialog.open();
+                        this._oRestockContext = oContext;
+                    }
+                } else {
+                    // If unchecked → clear restocking fee
+                    oModel.setProperty("restockingFee", "", oContext);
+                }
             }
+            },
+
+
+            onRestockOk: function () {
+                // Get data from dialog model
+                var oTempData = this._oRestockDialog.getModel("dialog").getProperty("/selectedItem");
+                var percent = oTempData.restockPercent;
+
+                // Validation: Check if entered
+                if (percent === undefined || percent === null || percent === "" || isNaN(percent)) {
+                    sap.m.MessageToast.show("Please enter a valid Restocking Percentage.");
+                    return; // stop execution
+                }
+
+                percent = parseFloat(percent);
+                if (percent <= 0) {
+                    sap.m.MessageToast.show("Restocking Percentage must be greater than 0.");
+                    return; // stop execution
+                }
+
+                var unitPrice = parseFloat(oTempData.UnitPrice || 0);
+                var unitDiscount = parseFloat(oTempData.returnUnitDiscount || 0);
+                var returnQty = oTempData.returnQty;
+
+                // Calculate fee = % of (UnitPrice - UnitDiscount)
+                var fee = (((unitPrice - unitDiscount) * returnQty) * percent / 100).toFixed(2);
+
+                // Write back to the selected row in ProductModel
+                this._oRestockContext.getModel().setProperty("restockingFee", fee, this._oRestockContext);
+
+                this._oRestockDialog.close();
+                this.updateTotalPrice();
+            },
+
+
+            onRestockCancel: function () {
+                // reset checkbox if user cancels
+                this._oRestockContext.getModel().setProperty("restockingInd", false, this._oRestockContext);
+                this._oRestockDialog.close();
+            }
+
+
 
 
         });
