@@ -1449,7 +1449,22 @@ sap.ui.define([
                     error: function (oError) {
 
                         that.getView().setBusy(false);
-                        sap.m.MessageToast.show("Error");
+                        sap.m.MessageBox.show(JSON.parse(oError.responseText).error.message.value, {
+                                icon: sap.m.MessageBox.Icon.Error,
+                                title: "Error",
+                                actions: [MessageBox.Action.OK],
+                                onClose: function (oAction) {
+                                    if (oAction === MessageBox.Action.OK) {
+  that._pAddRecordDialog.then(
+                            function (oValueHelpDialog) {
+
+                                oValueHelpDialog.setBusy(false);
+                                oValueHelpDialog.close();
+                            }.bind(that)
+                        );
+                                    }
+                                }
+                            });
                     }
                 });
 

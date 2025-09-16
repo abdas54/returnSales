@@ -164,7 +164,7 @@
 
 							</TileContent>
 						</GenericTile>
-						<GenericTile header="RESTOCKING FEE" frameType="OneByHalf" press="onPressDiscount" class="customTile" headerImage="sap-icon://activate">
+						<GenericTile header="RESTOCKING FEE" frameType="OneByHalf" press="onPressDiscount" class="customTile" visible="false" headerImage="sap-icon://activate">
 							<TileContent>
 								<!--<Button type="Transparent" icon="sap-icon://undo"/>-->
 
