@@ -912,14 +912,14 @@ sap.ui.define([
 
             },
             calculateSalesAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
-                var netPrice = parseFloat(netAmount - netDiscount).toFixed(2);
+                var netPrice = parseFloat(parseFloat(netAmount) + parseFloat(netDiscount)).toFixed(2);
                 var vatAmount = parseFloat(netPrice * (vatPercent) / 100).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(vatAmount) + parseFloat(netPrice);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount = parseFloat(this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnTotalAmount).toFixed(2);
                 this.getView().getModel("ProductModel").refresh();
             },
             calculateVATAmount: function (netAmount, netDiscount, vatPercent, selIndex) {
-                var netPrice = parseFloat(netAmount - netDiscount).toFixed(2);
+                var netPrice = parseFloat(parseFloat(netAmount) + parseFloat(netDiscount)).toFixed(2);
                 var vatAmount = parseFloat(netPrice * (vatPercent) / 100).toFixed(2);
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).VatAmount = vatAmount;
                 this.getView().getModel("ProductModel").getObject("/items/" + selIndex).returnVATAmount = vatAmount;
@@ -928,12 +928,15 @@ sap.ui.define([
             },
             updateTotalPrice: function () {
                 var productTblData = this.getView().getModel("ProductModel").getProperty("/items");
+                var oTable = this.getView().byId("idProductsTable");
+                var aSelectedContexts = oTable.getSelectedContexts();
                 var totalPrice = 0;
                 var totalQty = 0;
                 var totalVAT = 0;
                 var totalDiscount = 0;
                 var totalGross = 0;
                 var totalRestockingFee= 0;
+                debugger;
                 for (var count = 0; count < productTblData.length; count++) {
                     totalPrice = parseFloat(parseFloat(totalPrice) + parseFloat(productTblData[count].returnTotalAmount)).toFixed(2);
                     totalGross = parseFloat(parseFloat(totalGross) + parseFloat(productTblData[count].returnAmount)).toFixed(2);
@@ -1382,7 +1385,7 @@ sap.ui.define([
                     restockFee = null;
                 }
                 else{
-                    restockFee = that.totalRestockFee;
+                    restockFee = "-" + that.totalRestockFee;
                 }
 
                 var oPayload = {
@@ -1400,7 +1403,7 @@ sap.ui.define([
                     "TransactionType": this.transactionType,
                     "ShippingMethod": "",
                     "GrossAmount": this.getView().byId("gross").getCount().toString(),
-                    "Discount": this.getView().byId("discount").getCount().toString().replace("-", ""),
+                    "Discount": this.getView().byId("discount").getCount().toString(),
                     "VatAmount": this.getView().byId("vat").getCount().toString(),
                     "SaleAmount": this.getView().byId("saleAmount").getCount().toString(),
                     "Currency": "AED",
@@ -1408,6 +1411,7 @@ sap.ui.define([
                     "CustomerName": this.getView().byId("customer").getCount(),
                     "ContactNo": that.mainData.ContactNo,
                     "CountryCode": that.mainData.CountryCode,
+                    "TrnNumber" : that.mainData.TrnNumber,
                     "Mobile": that.mainData.Mobile,
                     "EMail": that.mainData.EMail,
                     "Address": that.mainData.Address,
@@ -1475,14 +1479,27 @@ sap.ui.define([
             },
             oPayloadPayments: function () {
                 this.aPaymentEntries = [];
+                var spayType="";
+                var spayTypeName = "";
+                var spaymethod = "";
+                if(this.transactionType === "2"){
+                  spayType = "CREDIT NOTE" ;
+                  spayTypeName = "Credit Note";
+                  spaymethod = "030";
+                }
+                else{
+                  spayType = "REFUND NOTE" ;  
+                  spayTypeName = "Refund Note";
+                  spaymethod = "998";
+                }
                 this.aPaymentEntries.push({
                     "TransactionId": "",
                     "PaymentId": that.paymentId.toString(),
                     "PaymentDate": new Date(),
                     "Amount": this.getView().byId("saleAmount").getCount().toString(),
                     "Currency": "AED",
-                    "PaymentMethod": "030",
-                    "PaymentMethodName": "Credit Memo",
+                    "PaymentMethod": spaymethod,
+                    "PaymentMethodName": spayTypeName,
                     "Tid": "",
                     "Mid": "",
                     "CardType": "",
@@ -1490,7 +1507,7 @@ sap.ui.define([
                     "CardNumber": "",
                     "AuthorizationCode": "",
                     "CardReceiptNo": "",
-                    "PaymentType": "CREDIT NOTE",
+                    "PaymentType": spayType,
                     "VoucherNumber": "",
                     "SourceId": ""
 
@@ -1518,7 +1535,7 @@ sap.ui.define([
                             restockFee = null;
                         }
                         else{
-                            restockFee = itemData.restockingFee;
+                            restockFee = "-" + itemData.restockingFee;
                         }
                         itemArr.push({
                             "TransactionId": "",
@@ -1533,7 +1550,7 @@ sap.ui.define([
                             "UnitDiscount": itemData.UnitDiscount,
                             "GrossAmount": itemData.returnAmount,
                             "Discount": itemData.returnDiscount,
-                            "NetAmount": parseFloat(parseFloat(itemData.returnAmount) - parseFloat(itemData.returnDiscount)).toFixed(2),
+                            "NetAmount": parseFloat(parseFloat(itemData.returnAmount) + parseFloat(itemData.returnDiscount)).toFixed(2),
                             "VatPercent": itemData.VatPercent,
                             "VatAmount": itemData.VatAmount,
                             "SaleAmount": itemData.returnTotalAmount,
@@ -1573,6 +1590,9 @@ sap.ui.define([
 
 
 
+            },
+            onReturnCancel: function(){
+             this._oDialog.close();
             },
             onCloseDialog: function (oEvent) {
                 var sSelectedOption = oEvent.getSource().getProperty("header");
@@ -1868,7 +1888,7 @@ sap.ui.define([
                 var returnQty = oTempData.returnQty;
 
                 // Calculate fee = % of (UnitPrice - UnitDiscount)
-                var fee = (((unitPrice - unitDiscount) * returnQty) * percent / 100).toFixed(2);
+                var fee = (((unitPrice + unitDiscount) * returnQty) * percent / 100).toFixed(2);
 
                 // Write back to the selected row in ProductModel
                 this._oRestockContext.getModel().setProperty("restockingFee", fee, this._oRestockContext);

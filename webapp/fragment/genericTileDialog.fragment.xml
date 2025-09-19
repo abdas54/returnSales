@@ -12,6 +12,8 @@
 							
 						</GenericTile>
         </HBox>
-       
+       <endButton>
+            <Button text="Cancel" press="onReturnCancel"/>
+        </endButton>
     </Dialog>
 </core:FragmentDefinition>
