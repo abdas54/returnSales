@@ -3,12 +3,13 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
     "sap/ui/core/Fragment",
-    "sap/m/MessageBox"
+    "sap/m/MessageBox",
+    "sap/ndc/BarcodeScanner"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, MessageToast, Fragment, MessageBox) {
+    function (Controller, JSONModel, MessageToast, Fragment, MessageBox,BarcodeScanner) {
         "use strict";
         var that;
         return Controller.extend("com.eros.returnsales.controller.MainView", {
@@ -563,6 +564,7 @@ sap.ui.define([
                     });
 
                 }
+                this.updateTotalPrice();
             },
             onUpdateTableData: function () {
                 var oTable = this.byId("idProductsTable");
@@ -937,17 +939,18 @@ sap.ui.define([
                 var totalGross = 0;
                 var totalRestockingFee= 0;
                 debugger;
-                for (var count = 0; count < productTblData.length; count++) {
-                    totalPrice = parseFloat(parseFloat(totalPrice) + parseFloat(productTblData[count].returnTotalAmount)).toFixed(2);
-                    totalGross = parseFloat(parseFloat(totalGross) + parseFloat(productTblData[count].returnAmount)).toFixed(2);
-                    totalQty = totalQty + parseInt(productTblData[count].returnQty);
-                    totalVAT = parseFloat(parseFloat(totalVAT) + parseFloat(productTblData[count].returnVATAmount)).toFixed(2);
-                    totalDiscount = parseFloat(parseFloat(totalDiscount) + parseFloat(productTblData[count].returnDiscount)).toFixed(2);
-                    if(productTblData[count].restockingFee === ""){
+                for (var count = 0; count < aSelectedContexts.length; count++) {
+                    var itemData = this.getView().getModel("ProductModel").getObject(aSelectedContexts[count].sPath);
+                    totalPrice = parseFloat(parseFloat(totalPrice) + parseFloat(itemData.returnTotalAmount)).toFixed(2);
+                    totalGross = parseFloat(parseFloat(totalGross) + parseFloat(itemData.returnAmount)).toFixed(2);
+                    totalQty = totalQty + parseInt(itemData.returnQty);
+                    totalVAT = parseFloat(parseFloat(totalVAT) + parseFloat(itemData.returnVATAmount)).toFixed(2);
+                    totalDiscount = parseFloat(parseFloat(totalDiscount) + parseFloat(itemData.returnDiscount)).toFixed(2);
+                    if(itemData.restockingFee === ""){
                       totalRestockingFee = parseFloat(parseFloat(totalRestockingFee) + parseFloat("0.00")).toFixed(2);
                     }
                     else{
-                        totalRestockingFee = parseFloat(parseFloat(totalRestockingFee) + parseFloat(productTblData[count].restockingFee)).toFixed(2);
+                        totalRestockingFee = parseFloat(parseFloat(totalRestockingFee) + parseFloat(itemData.restockingFee)).toFixed(2);
                     }
                     
                 }
@@ -1660,9 +1663,12 @@ sap.ui.define([
                 return this.serialNumber;
             },
             onClear: function () {
-                sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePad").clear();
+                //sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePad").clear();
                 sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePadCash").clear();
 
+            },
+            onClearCashierSignature: function(){
+                sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePad").clear();
             },
             onDialogClose: function () {
                 this.onClear();

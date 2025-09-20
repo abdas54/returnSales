@@ -24,6 +24,10 @@
 			<Label text="Customer Signature " required="true"/>
 			<sig:signaturePadControl id="idSignaturePad" width="250PX" height="150PX" thickness="" bgcolor="rgb(255, 255, 255)" signcolor="" ></sig:signaturePadControl>
 		</VBox>
+		 <VBox class="sapUiTinyMarginBottom sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop" >
+            <Button text="Clear" press="onClearCashierSignature"  />
+           
+        </VBox>
 		<VBox class="sapUiTinyMarginBottom sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop">
 			<Label text="Cashier Signature " required="true"/>
 			<sig:signaturePadControl id="idSignaturePadCash" width="250PX" height="150PX" thickness="" bgcolor="rgb(255, 255, 255)" signcolor="" ></sig:signaturePadControl>

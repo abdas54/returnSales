@@ -37,9 +37,10 @@
 								<FlexItemData growFactor="2"/>
 							</layoutData>
 				</Input>
-				<Button class="sapUiSmallMarginEnd" type="Transparent"  icon="sap-icon://qr-code" press="onScan" >
-				</Button>
-                <Button class="cstmBtn " press="onSearch" text="Search" type="Transparent" />
+				<core:Icon src="sap-icon://qr-code" size="2rem" class="sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiTinyMarginTop" press="onScan"/>
+				<!-- <Button class="sapUiSmallMarginEnd" type="Transparent"  icon="sap-icon://qr-code" press="onScan" >
+				</Button> -->
+                <Button class="cstmBtn sapUiTinyMarginTop" press="onSearch" text="Search" type="Transparent" />
                 </HBox>
 				<HBox>
 				
