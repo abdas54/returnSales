@@ -553,6 +553,103 @@ sap.ui.define([
                     }
                 });
             },
+            getScanTransactionData: function (tranNumber) {
+                var that = this;
+                
+
+                this.oModel.read("/SalesTransactionHeaderSet('" + tranNumber + "')", {
+                    urlParameters: {
+                        "$expand": "ToItems,ToDiscounts,ToPayments,ToSerials"
+                    },
+
+                    success: function (oData) {
+                        that.mainData = oData;
+                        that.ToDiscounts = oData.ToDiscounts;
+                        that.ToPayments = oData.ToPayments;
+                        that.ToSerials = oData.ToSerials;
+                        that.getView().byId("tranNumber").setCount(tranNumber);
+                        that.getView().byId("customer").setCount(oData.CustomerName);
+
+                        //that.getView().byId("totalPrice").setText("0.00");
+                        var oModel = new JSONModel();
+                        oModel.setData({ "items": [] });
+                        var aItems = oData.ToItems.results;
+                        var aSerials = oData.ToSerials.results;
+                        var mSerialsByItem = {};
+                        aSerials.forEach(serial => {
+                            var itemId = serial.TransactionItem;
+                            if (!mSerialsByItem[itemId]) {
+                                mSerialsByItem[itemId] = [];
+                            }
+                            mSerialsByItem[itemId].push(serial);
+                        });
+
+                        aItems.forEach(item => {
+                            var itemId = item.TransactionItem;
+                            item.returnQty = 0;
+                            if (that.mainData.CustomerType === "TOURIST") {
+                                item.returnQty = parseInt(item.Quantity);
+                            }
+                            item.returnAmount = "0.00";
+                            item.returnDiscount = "0.00";
+                            item.returnTotalAmount = "0.00";
+                            item.returnVATAmount = "0.00";
+                            item.returnUnitDiscount = item.UnitDiscount;
+                            item.restockingInd = false;
+                            item.restockingFee = "";
+                            var serialsForItem = mSerialsByItem[itemId] || [];
+
+                            // Add boolean as string
+                            item.SerialNumbers = serialsForItem.length > 0 ? true : false;
+
+                            // Optionally add the actual serials array for UI use
+                            item.SerialList = serialsForItem;
+                        });
+
+                        oModel.setData({ "items": aItems });
+                        oModel.refresh();
+
+                        that.getView().setModel(oModel, "ProductModel");
+                        if (that.getView().getModel("discountModelTable")) {
+                            that.getView().getModel("discountModelTable").setProperty("/entries", []);
+                        }
+                        if (that.mainData.CustomerType === "TOURIST") {
+                            that.onUpdateTableData();
+                        }
+                        else {
+                            var oTable1 = that.byId("idProductsTable");
+                            var aItems1 = oTable1.getItems();
+
+                            aItems1.forEach(function (oItem) {
+                                var aCells = oItem.getCells();
+
+                                // The HBox is at the 8th cell (index 7 if zero-based)
+                                var oHBox = aCells[6]; // adjust index based on actual column order
+                                if (oHBox && oHBox instanceof sap.m.HBox) {
+                                    var aHBoxItems = oHBox.getItems();
+                                    aHBoxItems[0].setEnabled(true);
+                                    aHBoxItems[2].setEnabled(true);
+                                    aHBoxItems[1].setEnabled(true);
+                                }
+                            });
+                        }
+                    },
+                    error: function (oError) {
+                        sap.m.MessageBox.show(
+                            JSON.parse(oError.responseText).error.message.value, {
+                            icon: sap.m.MessageBox.Icon.Error,
+                            title: "Error",
+                            actions: ["OK", "CANCEL"],
+                            onClose: function (oAction) {
+
+                            }
+                        }
+                        );
+
+
+                    }
+                });
+            },
             onSelectionChange: function () {
                 if (this._selectionLocked) {
                     var oTable = this.byId("idProductsTable");
@@ -615,7 +712,7 @@ sap.ui.define([
                     function (mResult) {
 
                         if (!mResult.cancelled) {
-                            that.getTransactionData(mResult.text);
+                            that.getScanTransactionData(mResult.text);
                         }
                     },
                     function (Error) {
