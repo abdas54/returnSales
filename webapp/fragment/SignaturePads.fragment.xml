@@ -1,0 +1,29 @@
+<core:FragmentDefinition xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:html="http://www.w3.org/1999/xhtml">
+    <HBox>
+    <VBox id="signBox" class="sapUiSmallMarginBeginEnd sapUiSmallMarginBottom sapUiSmallMarginTop customerDialog" width="30%" height="480px" >
+        <Label text="Cashier Signature" design="Bold" class="sapUiSmallMarginTop sapUiSmallMarginBottom"></Label>
+        <html:canvas id="signatureCanvas" width="450" height="200"
+                     style="border:1px solid #000; touch-action: none;">
+        </html:canvas>
+        <HBox>
+            <Button text="Clear" press="onClearCashierSignature" class="sapUiTinySmallMarginTop cstmBtn" />
+           
+        </HBox>
+        <Label text="Customer Signature" design="Bold"  class="sapUiSmallMarginTop sapUiSmallMarginBottom"></Label>
+        <html:canvas id="signatureCanvas1" width="450" height="200"
+                     style="border:1px solid #000; touch-action: none;">
+        </html:canvas>
+        <HBox justifyContent="SpaceBetween">
+            <Button text="Clear" press="onClearSignature" class="sapUiTinySmallMarginTop cstmBtn" />
+            <Button text="Submit" press="onSaveSignature" class="sapUiTinySmallMarginTop cstmBtn" />
+        </HBox>
+    </VBox>
+    <VBox width="10%"></VBox>
+    <VBox id="printBox" visible="false" class="sapUiSmallMarginEnd sapUiSmallMarginBottom sapUiMediumMarginBegin sapUiSmallMarginTop customerDialog" width="60%" height="480px" >
+     <Button text="Print" press="onPressPrint" class="sapUiTinySmallMarginTop cstmBtn" />
+     <core:HTML id="pdfCanvas" />
+     </VBox>
+      </HBox>
+</core:FragmentDefinition>

@@ -4,12 +4,13 @@ sap.ui.define([
     "sap/m/MessageToast",
     "sap/ui/core/Fragment",
     "sap/m/MessageBox",
-    "sap/ndc/BarcodeScanner"
+    "sap/ndc/BarcodeScanner",
+    "com/eros/returnsales/lib/epos-2.27.0"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, MessageToast, Fragment, MessageBox,BarcodeScanner) {
+    function (Controller, JSONModel, MessageToast, Fragment, MessageBox, BarcodeScanner,epson2) {
         "use strict";
         var that;
         return Controller.extend("com.eros.returnsales.controller.MainView", {
@@ -555,7 +556,7 @@ sap.ui.define([
             },
             getScanTransactionData: function (tranNumber) {
                 var that = this;
-                
+
 
                 this.oModel.read("/SalesTransactionHeaderSet('" + tranNumber + "')", {
                     urlParameters: {
@@ -1034,8 +1035,8 @@ sap.ui.define([
                 var totalVAT = 0;
                 var totalDiscount = 0;
                 var totalGross = 0;
-                var totalRestockingFee= 0;
-                debugger;
+                var totalRestockingFee = 0;
+             
                 for (var count = 0; count < aSelectedContexts.length; count++) {
                     var itemData = this.getView().getModel("ProductModel").getObject(aSelectedContexts[count].sPath);
                     totalPrice = parseFloat(parseFloat(totalPrice) + parseFloat(itemData.returnTotalAmount)).toFixed(2);
@@ -1043,13 +1044,13 @@ sap.ui.define([
                     totalQty = totalQty + parseInt(itemData.returnQty);
                     totalVAT = parseFloat(parseFloat(totalVAT) + parseFloat(itemData.returnVATAmount)).toFixed(2);
                     totalDiscount = parseFloat(parseFloat(totalDiscount) + parseFloat(itemData.returnDiscount)).toFixed(2);
-                    if(itemData.restockingFee === ""){
-                      totalRestockingFee = parseFloat(parseFloat(totalRestockingFee) + parseFloat("0.00")).toFixed(2);
+                    if (itemData.restockingFee === "") {
+                        totalRestockingFee = parseFloat(parseFloat(totalRestockingFee) + parseFloat("0.00")).toFixed(2);
                     }
-                    else{
+                    else {
                         totalRestockingFee = parseFloat(parseFloat(totalRestockingFee) + parseFloat(itemData.restockingFee)).toFixed(2);
                     }
-                    
+
                 }
                 this.totalRestockFee = totalRestockingFee;
                 var totalUpdPrice = totalPrice - totalRestockingFee;
@@ -1481,10 +1482,10 @@ sap.ui.define([
             onPressReturn: function (oEvent) {
                 var that = this;
                 var restockFee;
-                if(that.totalRestockFee === ""){
+                if (that.totalRestockFee === "") {
                     restockFee = null;
                 }
-                else{
+                else {
                     restockFee = "-" + that.totalRestockFee;
                 }
 
@@ -1511,7 +1512,7 @@ sap.ui.define([
                     "CustomerName": this.getView().byId("customer").getCount(),
                     "ContactNo": that.mainData.ContactNo,
                     "CountryCode": that.mainData.CountryCode,
-                    "TrnNumber" : that.mainData.TrnNumber,
+                    "TrnNumber": that.mainData.TrnNumber,
                     "Mobile": that.mainData.Mobile,
                     "EMail": that.mainData.EMail,
                     "Address": that.mainData.Address,
@@ -1527,7 +1528,7 @@ sap.ui.define([
                     "VATRefundTag": that.mainData.VATRefundTag,
                     "PlanetURL": that.mainData.PlanetURL,
                     "CustomerType": that.mainData.CustomerType,
-                    "RestockingFee" : restockFee
+                    "RestockingFee": restockFee
 
                 }
 
@@ -1536,16 +1537,16 @@ sap.ui.define([
                     success: function (oData) {
                         that.getView().byId("tranNumber").setCount(oData.TransactionId);
                         that.getView().setBusy(false);
-                        that._pAddRecordDialog.then(
-                            function (oValueHelpDialog) {
-
-                                oValueHelpDialog.setBusy(false);
-                            }.bind(that)
-                        );
+                        if (that._pAddRecordDialog) {
+                                    that._pAddRecordDialog.setBusy(false);
+                                }
                         // that.oEvent.setPressEnabled(true);
                         MessageBox.success("Item has been successfully returned.", {
                             onClose: function (sAction) {
-                                window.location.reload(true);
+                                // window.location.reload(true);
+                                 for (var count = 1; count <= 2; count++) {
+                                                that.getPDFBase64(count);
+                                            }
                             }
                         });
 
@@ -1554,21 +1555,17 @@ sap.ui.define([
 
                         that.getView().setBusy(false);
                         sap.m.MessageBox.show(JSON.parse(oError.responseText).error.message.value, {
-                                icon: sap.m.MessageBox.Icon.Error,
-                                title: "Error",
-                                actions: [MessageBox.Action.OK],
-                                onClose: function (oAction) {
-                                    if (oAction === MessageBox.Action.OK) {
-  that._pAddRecordDialog.then(
-                            function (oValueHelpDialog) {
-
-                                oValueHelpDialog.setBusy(false);
-                                oValueHelpDialog.close();
-                            }.bind(that)
-                        );
-                                    }
+                            icon: sap.m.MessageBox.Icon.Error,
+                            title: "Error",
+                            actions: [MessageBox.Action.OK],
+                            onClose: function (oAction) {
+                                if (oAction === MessageBox.Action.OK) {
+                                     if (that._pAddRecordDialog) {
+                                    that._pAddRecordDialog.setBusy(false);
                                 }
-                            });
+                                }
+                            }
+                        });
                     }
                 });
 
@@ -1577,20 +1574,297 @@ sap.ui.define([
 
 
             },
+               getPDFBase64: function (count) {
+                var that = this;
+                var tranNumber = this.getView().byId("tranNumber").getCount().toString();
+                var sUrl = "/sap/opu/odata/SAP/ZEROS_RETAIL_PROJECT_SRV/TransactionPDFSet(TransactionId='" + tranNumber + "',TransactionCopy='" + count + "')/$value";
+
+                // Create XMLHttpRequest
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", sUrl, true);
+                xhr.responseType = "arraybuffer"; // Important to get binary content
+
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        var oHtmlControl = sap.ui.core.Fragment.byId("SignaturePad", "pdfCanvas");
+                        var iframeContent = '<div id="pdf-viewport"></div>';
+                        oHtmlControl.setContent(iframeContent);
+                        oHtmlControl.setVisible(true);
+
+                        var oPrintBox = sap.ui.core.Fragment.byId("SignaturePad", "printBox");
+                        oPrintBox.setVisible(true);
+
+                        var oSignBox = sap.ui.core.Fragment.byId("SignaturePad", "signBox");
+                        oSignBox.setVisible(false);
+                        // Convert binary to Base64
+                        var binary = '';
+                        var bytes = new Uint8Array(xhr.response);
+                        var len = bytes.byteLength;
+                        for (var i = 0; i < len; i++) {
+                            binary += String.fromCharCode(bytes[i]);
+                        }
+
+                        var base64 = btoa(binary);
+                        console.log("Base64 PDF Content:", base64);
+
+                        that.onShowPDFSEPP(base64, count);
+
+                    } else {
+                        console.error("Failed to fetch PDF. Status: ", xhr.status);
+                    }
+                };
+
+                xhr.send();
+            },
+
+
+            onShowPDFSEPP: async function (base64Content, count) {
+
+                var byteCharacters = atob(base64Content);
+                var byteNumbers = new Array(byteCharacters.length);
+
+                for (var i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+
+                var byteArray = new Uint8Array(byteNumbers);
+
+
+                var blob = new Blob([byteArray], {
+                    type: 'application/pdf'
+                });
+
+
+                var pdfUrl = URL.createObjectURL(blob);
+
+                var printerIp = "192.168.10.75"; // your Epson printer IP
+
+                try {
+                    const canvas = await this.loadPdfToCanvas(pdfUrl);
+                    this.canvasp = canvas;
+                    this.printerIP = printerIp;
+
+                    this.sendToEpsonPrinter(canvas, printerIp, count);
+                } catch (err) {
+                    MessageBox.error("Error rendering or printing PDF: " + err.message);
+                }
+
+            },
+            onPressPrint: function () {
+                this.sendToEpsonPrinter(this.canvasp, this.printerIP);
+            },
+            isSingleColor: function (imageData) {
+                const stride = 4;
+                for (let offset = 0; offset < stride; offset++) {
+                    const first = imageData[offset];
+                    for (let i = offset; i < imageData.length; i += stride) {
+                        if (first !== imageData[i]) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            },
+            loadPdfToCanvas: async function (pdfUrl) {
+                await this.ensurePdfJsLib();
+
+                try {
+                    const pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+                    const printerWidth = 576;
+                    const canvasArray = [];
+
+                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                        const page = await pdfDoc.getPage(pageNum);
+                        const scale = printerWidth / page.getViewport({ scale: 1 }).width;
+                        const viewport = page.getViewport({ scale });
+                        const pdfContainer = document.getElementById("pdf-viewport");
+                        const canvas = document.createElement("canvas");
+                        // pdfContainer.appendChild(canvas);
+                        const width = viewport.width;
+                        const height = viewport.height;
+                        canvas.height = height;
+                        canvas.width = width;
+                        canvas.style.width = Math.floor(width) + "px";
+                        canvas.style.height = Math.floor(height) + "px";
+                        canvas.setAttribute("willReadFrequently", "true");
+                        // canvas.width = viewport.width;
+                        // canvas.height = viewport.height;
+                        const context = canvas.getContext("2d", { willReadFrequently: true });
+                        context.clearRect(0, 0, width, height);
+
+                        await page.render({
+                            canvasContext: context,
+                            viewport
+                        }).promise;
+
+                        let top = 0;
+                        let bottom = height;
+                        let left = 0;
+                        let right = width;
+
+                        while (top < bottom) {
+                            const imageData = context.getImageData(
+                                left,
+                                top,
+                                right - left,
+                                1
+                            ).data;
+                            if (!this.isSingleColor(imageData)) {
+                                break;
+                            }
+                            top++;
+                        }
+                        while (top < bottom) {
+                            const imageData = context.getImageData(
+                                left,
+                                bottom,
+                                right - left,
+                                1
+                            ).data;
+                            if (!this.isSingleColor(imageData)) {
+                                break;
+                            }
+                            bottom--;
+                        }
+                        while (left < right) {
+                            const imageData = context.getImageData(
+                                left,
+                                top,
+                                1,
+                                bottom - top
+                            ).data;
+                            if (!this.isSingleColor(imageData)) {
+                                break;
+                            }
+                            left++;
+                        }
+                        while (left < right) {
+                            const imageData = context.getImageData(
+                                right,
+                                top,
+                                1,
+                                bottom - top
+                            ).data;
+                            if (!this.isSingleColor(imageData)) {
+                                break;
+                            }
+                            right--;
+                        }
+
+                        context.clearRect(0, 0, width, height);
+                        const adjustedScale = printerWidth / (right - left);
+                        const adjustedWidth = (right - left) * adjustedScale;
+                        const adjustedHeight = (bottom - top) * adjustedScale;
+
+                        canvas.height = adjustedHeight + 10;
+                        canvas.width = adjustedWidth;
+                        canvas.style.width = `${adjustedWidth}px`;
+                        canvas.style.height = `${adjustedHeight}px`;
+
+                        pdfContainer.appendChild(canvas);
+                        await page.render({
+                            canvasContext: context,
+                            viewport,
+                        }).promise;
+
+                        // Store each rendered canvas
+                        canvasArray.push(canvas);
+                    }
+
+                    // Now return array of canvases or send to printer
+                    return canvasArray;
+
+                } catch (error) {
+                    console.error("Error loading PDF:", error);
+                    MessageToast.show("Failed to load PDF: " + error.message);
+                }
+            },
+            ensurePdfJsLib: async function () {
+                if (!window.pdfjsLib) {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement("script");
+                        script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
+                        script.onload = () => {
+                            window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+                            window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+                                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+                            resolve();
+                        };
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+            },
+
+            sendToEpsonPrinter: function (canvases, printerIp, count) {
+                var ePosDev = new epson.ePOSDevice();
+                //var ip = this.getView().byId("ipaddr").getValue();
+                // var wdth = this.getView().byId("wdth").getValue();
+                // var ht = this.getView().byId("heht").getValue();
+
+                ePosDev.connect(printerIp, 8043, function (resultConnect) {
+                    if (resultConnect === "OK" || resultConnect == "SSL_CONNECT_OK") {
+                        ePosDev.createDevice("local_printer", ePosDev.DEVICE_TYPE_PRINTER,
+                            { crypto: false, buffer: false },
+                            function (deviceObj, resultCreate) {
+                                if (resultCreate === "OK") {
+                                    var printer = deviceObj;
+
+
+
+                                    printer.brightness = 1.0;
+                                    printer.halftone = printer.HALFTONE_ERROR_DIFFUSION;
+                                    for (const canvas of canvases) {
+                                        printer.addImage(canvas.getContext("2d", { willReadFrequently: true }), 0, 0, canvas.width, canvas.height, printer.COLOR_1, printer.MODE_MONO);
+                                    }
+
+
+                                    printer.addCut(printer.CUT_FEED);
+                                    printer.send();
+                                    if (count == 2) {
+                                        window.location.reload(true);
+                                    }
+                                    // printer.send(function (resultSend) {
+                                    //     if (resultSend === "OK") {
+                                    //         sap.m.MessageToast.show("Printed successfully!");
+                                    //     } else {
+                                    //         sap.m.MessageBox.error("Print failed: " + resultSend);
+                                    //     }
+                                    // });
+                                } else {
+                                    sap.m.MessageBox.error("Failed to create device: " + resultCreate);
+                                }
+                            }
+                        );
+                    } else {
+                        //sap.m.MessageBox.error("Connection failed: " + resultConnect);
+                        sap.m.MessageBox.error("Connection failed: " + resultConnect, {
+                            title: "Error",
+                            actions: [sap.m.MessageBox.Action.OK],
+                            onClose: function (oAction) {
+                                if (oAction === sap.m.MessageBox.Action.OK) {
+                                    window.location.reload(true);
+                                }
+                            }.bind(this)
+                        });
+                    }
+                });
+            },
+
             oPayloadPayments: function () {
                 this.aPaymentEntries = [];
-                var spayType="";
+                var spayType = "";
                 var spayTypeName = "";
                 var spaymethod = "";
-                if(this.transactionType === "2"){
-                  spayType = "CREDIT NOTE" ;
-                  spayTypeName = "Credit Note";
-                  spaymethod = "030";
+                if (this.transactionType === "2") {
+                    spayType = "CREDIT NOTE";
+                    spayTypeName = "Credit Note";
+                    spaymethod = "030";
                 }
-                else{
-                  spayType = "REFUND NOTE" ;  
-                  spayTypeName = "Refund Note";
-                  spaymethod = "998";
+                else {
+                    spayType = "REFUND NOTE";
+                    spayTypeName = "Refund Note";
+                    spaymethod = "998";
                 }
                 this.aPaymentEntries.push({
                     "TransactionId": "",
@@ -1630,11 +1904,11 @@ sap.ui.define([
 
                     for (var count = 0; count < tableData.length; count++) {
                         var itemData = tableData[count].getModel().getObject(tableData[count].sPath);
-                        var restockFee ;
-                        if(itemData.restockingFee === ""){
+                        var restockFee;
+                        if (itemData.restockingFee === "") {
                             restockFee = null;
                         }
-                        else{
+                        else {
                             restockFee = "-" + itemData.restockingFee;
                         }
                         itemArr.push({
@@ -1662,7 +1936,7 @@ sap.ui.define([
                             "OriginalTransactionItem": itemData.TransactionItem,
                             "Reason": itemData.Reason,
                             "RestockingIndicator": itemData.restockingInd ? "X" : "",
-                            "RestockingFee" : restockFee
+                            "RestockingFee": restockFee
                         })
                     }
 
@@ -1691,8 +1965,8 @@ sap.ui.define([
 
 
             },
-            onReturnCancel: function(){
-             this._oDialog.close();
+            onReturnCancel: function () {
+                this._oDialog.close();
             },
             onCloseDialog: function (oEvent) {
                 var sSelectedOption = oEvent.getSource().getProperty("header");
@@ -1708,8 +1982,80 @@ sap.ui.define([
                 }
                 var bFlag = this.validateReturn();
                 if (bFlag) {
-                    this.OnSignaturePress();
+                    this.onOpenSignaturePad();
+                    //this.OnSignaturePress();
                 }
+            },
+            onClearSignature: function () {
+
+
+                const oCanvasControl1 = sap.ui.core.Fragment.byId("SignaturePad", "signatureCanvas1");
+                const canvas1 = oCanvasControl1.getDomRef();
+                const ctx1 = canvas1.getContext("2d");
+                ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            },
+            onClearCashierSignature: function () {
+                const oCanvasControl = sap.ui.core.Fragment.byId("SignaturePad", "signatureCanvas");
+                const canvas = oCanvasControl.getDomRef();
+                const ctx = canvas.getContext("2d");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            },
+            onSaveSignature: function () {
+                var that = this;
+                this.oPaySignatureload = [];
+                const oCanvasControl = sap.ui.core.Fragment.byId("SignaturePad", "signatureCanvas");
+                const canvas = oCanvasControl.getDomRef();
+                const imageData = canvas.toDataURL("image/png"); // base64 format
+                // You can now send this to backend or store it
+                console.log("Signature Base64:", imageData);
+
+                const oCanvasControl1 = sap.ui.core.Fragment.byId("SignaturePad", "signatureCanvas1");
+                const canvas1 = oCanvasControl1.getDomRef();
+                const imageData1 = canvas1.toDataURL("image/png"); // base64 format
+                // You can now send this to backend or store it
+                console.log("Signature Base64:", imageData1);
+
+                this.oPaySignatureload.push({
+                    "TransactionId": this.getView().byId("tranNumber").getCount(),
+                    "Value": imageData.split("data:image/png;base64,")[1],
+                    "Mimetype": 'image/png',
+                    "SignType": "S"
+                })
+
+                this.oPaySignatureload.push({
+                    "TransactionId": this.getView().byId("tranNumber").getCount(),
+                    "Value": imageData1.split("data:image/png;base64,")[1],
+                    "Mimetype": 'image/png',
+                    "SignType": "C"
+                })
+
+
+                that._pAddRecordDialog.setBusy(true);
+                setTimeout(function () {
+                    that.onPressReturn(true);
+                }, 1000)
+            },
+            onOpenSignaturePad: function () {
+                if (!this._pAddRecordDialog) {
+                    const oContent = sap.ui.xmlfragment(
+                        "SignaturePad",
+                        "com.eros.returnsales.fragment.SignaturePads",
+                        this
+                    );
+
+                    this._pAddRecordDialog = new sap.m.Dialog({
+                        title: "Signature Pad",
+                        content: [oContent],
+                        stretch: true,
+                        afterOpen: this._initializeCanvas.bind(this),
+
+                    });
+
+                    this.getView().addDependent(this._pAddRecordDialog);
+                }
+                var oPrintBox = sap.ui.core.Fragment.byId("SignaturePad", "printBox");
+                oPrintBox.setVisible(false);
+                this._pAddRecordDialog.open();
             },
             OnSignaturePress: function () {
                 var that = this,
@@ -1764,9 +2110,7 @@ sap.ui.define([
                 sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePadCash").clear();
 
             },
-            onClearCashierSignature: function(){
-                sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePad").clear();
-            },
+          
             onDialogClose: function () {
                 this.onClear();
                 this._pAddRecordDialog.then(
@@ -1930,42 +2274,42 @@ sap.ui.define([
                 var oData = oContext.getObject();
                 var oView = this.getView();
 
-                if(oData.returnQty === 0 || oData.returnQty === "0.00"){
-                 sap.m.MessageToast.show("Please select the Return Quanity");
-                 oModel.setProperty("restockingInd", false, oContext);
-                 oModel.setProperty("restockingFee", "", oContext);
-                }
-                else{
-                if (bSelected) {
-                    var oTempModel = new sap.ui.model.json.JSONModel({
-                        selectedItem: Object.assign({}, oData) // copy of row data
-                    });
-
-                    if (!this._oRestockDialog) {
-                        Fragment.load({
-                            name: "com.eros.returnsales.fragment.RestockDialog",
-                            controller: this
-                        }).then(function (oFragment) {
-                            this._oRestockDialog = oFragment;
-                            this.getView().addDependent(this._oRestockDialog);
-
-                            // ✅ set model here, after fragment exists
-                            this._oRestockDialog.setModel(oTempModel, "dialog");
-                            this._oRestockDialog.open();
-
-                            this._oRestockContext = oContext;
-                        }.bind(this));
-                    } else {
-                        // reuse existing fragment
-                        this._oRestockDialog.setModel(oTempModel, "dialog");
-                        this._oRestockDialog.open();
-                        this._oRestockContext = oContext;
-                    }
-                } else {
-                    // If unchecked → clear restocking fee
+                if (oData.returnQty === 0 || oData.returnQty === "0.00") {
+                    sap.m.MessageToast.show("Please select the Return Quanity");
+                    oModel.setProperty("restockingInd", false, oContext);
                     oModel.setProperty("restockingFee", "", oContext);
                 }
-            }
+                else {
+                    if (bSelected) {
+                        var oTempModel = new sap.ui.model.json.JSONModel({
+                            selectedItem: Object.assign({}, oData) // copy of row data
+                        });
+
+                        if (!this._oRestockDialog) {
+                            Fragment.load({
+                                name: "com.eros.returnsales.fragment.RestockDialog",
+                                controller: this
+                            }).then(function (oFragment) {
+                                this._oRestockDialog = oFragment;
+                                this.getView().addDependent(this._oRestockDialog);
+
+                                // ✅ set model here, after fragment exists
+                                this._oRestockDialog.setModel(oTempModel, "dialog");
+                                this._oRestockDialog.open();
+
+                                this._oRestockContext = oContext;
+                            }.bind(this));
+                        } else {
+                            // reuse existing fragment
+                            this._oRestockDialog.setModel(oTempModel, "dialog");
+                            this._oRestockDialog.open();
+                            this._oRestockContext = oContext;
+                        }
+                    } else {
+                        // If unchecked → clear restocking fee
+                        oModel.setProperty("restockingFee", "", oContext);
+                    }
+                }
             },
 
 
@@ -2005,6 +2349,138 @@ sap.ui.define([
                 // reset checkbox if user cancels
                 this._oRestockContext.getModel().setProperty("restockingInd", false, this._oRestockContext);
                 this._oRestockDialog.close();
+            },
+                _initializeCanvas: function () {
+                this._initializeCanvas1();
+                this._initializeCanvas2();
+            },
+            _initializeCanvas1: function () {
+                const oCanvasControl = sap.ui.core.Fragment.byId("SignaturePad", "signatureCanvas");
+                if (!oCanvasControl) {
+                    console.error("Canvas control not found");
+                    return;
+                }
+
+                const canvas = oCanvasControl.getDomRef(); // Get actual <canvas> DOM element
+                if (!canvas || !canvas.getContext) {
+                    console.error("Canvas DOM element not ready or invalid");
+                    return;
+                }
+
+                const ctx = canvas.getContext("2d");
+                let isDrawing = false;
+
+                const getEventPosition = (e) => {
+                    let x, y;
+                    if (e.touches && e.touches.length > 0) {
+                        x = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+                        y = e.touches[0].clientY - canvas.getBoundingClientRect().top;
+                    } else {
+                        x = e.clientX - canvas.getBoundingClientRect().left;
+                        y = e.clientY - canvas.getBoundingClientRect().top;
+                    }
+                    return {
+                        x,
+                        y
+                    };
+                };
+
+                const start = (e) => {
+                    isDrawing = true;
+                    ctx.beginPath();
+                    const pos = getEventPosition(e);
+                    ctx.moveTo(pos.x, pos.y);
+                    e.preventDefault();
+                };
+
+                const draw = (e) => {
+                    if (!isDrawing) return;
+                    const pos = getEventPosition(e);
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                    e.preventDefault();
+                };
+
+                const end = () => {
+                    isDrawing = false;
+                };
+
+                canvas.addEventListener("mousedown", start);
+                canvas.addEventListener("mousemove", draw);
+                canvas.addEventListener("mouseup", end);
+                canvas.addEventListener("mouseout", end);
+
+                canvas.addEventListener("touchstart", start, {
+                    passive: false
+                });
+                canvas.addEventListener("touchmove", draw, {
+                    passive: false
+                });
+                canvas.addEventListener("touchend", end);
+            },
+            _initializeCanvas2: function () {
+                const oCanvasControl = sap.ui.core.Fragment.byId("SignaturePad", "signatureCanvas1");
+                if (!oCanvasControl) {
+                    console.error("Canvas control not found");
+                    return;
+                }
+
+                const canvas = oCanvasControl.getDomRef(); // Get actual <canvas> DOM element
+                if (!canvas || !canvas.getContext) {
+                    console.error("Canvas DOM element not ready or invalid");
+                    return;
+                }
+
+                const ctx = canvas.getContext("2d");
+                let isDrawing = false;
+
+                const getEventPosition = (e) => {
+                    let x, y;
+                    if (e.touches && e.touches.length > 0) {
+                        x = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+                        y = e.touches[0].clientY - canvas.getBoundingClientRect().top;
+                    } else {
+                        x = e.clientX - canvas.getBoundingClientRect().left;
+                        y = e.clientY - canvas.getBoundingClientRect().top;
+                    }
+                    return {
+                        x,
+                        y
+                    };
+                };
+
+                const start = (e) => {
+                    isDrawing = true;
+                    ctx.beginPath();
+                    const pos = getEventPosition(e);
+                    ctx.moveTo(pos.x, pos.y);
+                    e.preventDefault();
+                };
+
+                const draw = (e) => {
+                    if (!isDrawing) return;
+                    const pos = getEventPosition(e);
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                    e.preventDefault();
+                };
+
+                const end = () => {
+                    isDrawing = false;
+                };
+
+                canvas.addEventListener("mousedown", start);
+                canvas.addEventListener("mousemove", draw);
+                canvas.addEventListener("mouseup", end);
+                canvas.addEventListener("mouseout", end);
+
+                canvas.addEventListener("touchstart", start, {
+                    passive: false
+                });
+                canvas.addEventListener("touchmove", draw, {
+                    passive: false
+                });
+                canvas.addEventListener("touchend", end);
             }
 
 

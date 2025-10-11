@@ -16,6 +16,25 @@
     letter-spacing: 0.14px !important;
     color: #000000 !important;
     font-size: 17px !important;
+   
+}
+.customInputHeight {
+  height: 3rem !important;
+  font-size: 1.2rem !important;
+}
+.sapMDialog>header .sapMDialogTitleGroup .sapMTitle {
+    color: black !important;
+    font-weight: bold !important;
+    font-size: 17px !important;
+}
+
+
+.sapUiFormResGrid>div {
+    background-color: #c8d9e6 !important; 
+
+}
+#__dialog1-cont {
+    background-color: #c8d9e6 !important; 
 }
 .cstmBtn .sapMBtnInner {
     -webkit-background-clip: padding-box;
@@ -91,7 +110,7 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
 
 .sapMGTHdrTxt>.sapMText {
     font-weight: bold !important;
-    font-size: 17px !important;
+    font-size: 15px !important;
     
 }
 
@@ -174,9 +193,9 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
     font-family: sans-serif !important;
    
 }
-.sapUiSizeCompact .sapMSlt {
+/* .sapUiSizeCompact .sapMSlt {
     height: 2.5rem !important;
-}
+} */
 .largeValidateButton .sapMBtnInner {
     height: 3rem !important;
     padding: 0 1.5rem !important;
@@ -190,15 +209,39 @@ html.sap-desktop .sapMITBFilter .sapMITBCount {
 .boldText{
     font-weight: bold !important;
 }
-div[id*="inputSales-popup"] {
-  margin-top: 15px !important;
- 
+
+div[id*="custMobCode-popup"] {
+  margin-top: 25px !important;
   box-shadow: none !important;
 
 }
 .page {
     background-color: #c8d9e6 !important;
 
+}
+.customerDialog {
+    letter-spacing: 0.14px !important;
+    color: #000000 !important;
+    font-size: 17px !important;
+   
+}
+.lstBackground {
+     background-color: #c8d9e6 !important; 
+}
+.customerDialog .sapMDialogSection{
+    background-color: #c8d9e6 !important; 
+}
+.stockDialog .sapMDialogSection{
+    background-color: #c8d9e6 !important; 
+}
+.paymentDialog .sapMDialogSection{
+    background-color: #c8d9e6 !important; 
+}
+.discountDialog .sapMDialogSection{
+    background-color: #c8d9e6 !important; 
+}
+.suspendDialog .sapMDialogSection{
+    background-color: #c8d9e6 !important; 
 }
 #__bar0--header {
      background-color: #c8d9e6 !important;
@@ -219,6 +262,11 @@ margin-top: 15px !important;
 }
 
 #application-comerossalesprocess-display-component---MainView--discountgt-title-inner {
+text-align: center !important;
+margin-top: 15px !important;
+}
+
+#application-comerossalesprocess-display-component---MainView--warrantygt-title-inner {
 text-align: center !important;
 margin-top: 15px !important;
 }
@@ -247,15 +295,15 @@ margin-top: 15px !important;
     
 }
 .sapUiTableHeaderDataCell .sapMText, .sapMColumnHeader .sapMText {
-    color: #dde3e9 !important;
+    color: white !important;
 }
 
 .sapMGTHdrIconImage {
     color: #1f2123 !important;
 }
-.sapUiSizeCompact .sapMSlt>.sapMSltArrow {
+/* .sapUiSizeCompact .sapMSlt>.sapMSltArrow {
     line-height: 2.5rem !important;
-}
+} */
 .signaturePad {
   border: 2px solid #050202 !important;
   border-radius: 5px !important;
@@ -263,9 +311,19 @@ margin-top: 15px !important;
 .stickyHeaderBox {
     position: sticky;
     top: 0;
-    background-color: white; /* Optional: match Dialog background */
     z-index: 2;
     padding: 0.5rem;
+    background-color: #2f4156 !important ;
+   
+    
+}
+.whiteLabel {
+     color: #eadf05 !important; 
+}
+.whiteLabelNumber {
+     color: #eadf05 !important; 
+     font-weight: bold !important;
+     font-size: 17px !important;
 }
 #__form0--FC-NoHead--Grid {
     background-color:  #c8d9e6 !important;
@@ -336,6 +394,73 @@ margin-top: 15px !important;
 #__panel20-content {
      background-color:  #c8d9e6 !important;
 }
-.stockDialog .sapMDialogSection{
-    background-color: #c8d9e6 !important; 
+.sapUiTableHeaderDataCell .sapMLabel, .sapMListTbl .sapMColumnHeader .sapMLabel {
+    font-size: 1rem !important;
+    color: white !important;
 }
+.sapUiSizeCompact .sapMSFF {
+    height: 2.5rem !important;
+}
+
+.sapUiSizeCompact .sapMSFB {
+    margin-top: 8px !important;
+}
+.sapMTB-Transparent-CTX>.sapMTitleTB.sapMTitleStyleAuto {
+    font-size: 17px !important;
+    font-weight: bold !important;
+    color: #000000 !important;
+}
+.sapUiSizeCompact.sapMDialog>.sapMDialogSection, .sapUiSizeCompact .sapMDialog>.sapMDialogSection{
+     background-color:  #c8d9e6 !important;
+}
+.sapUshellShellHeadItm{
+    display : none !important;
+}
+.customScrollContainer {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Ensures momentum scroll on iOS/Android */
+  scrollbar-width: auto; /* For Firefox */
+  scrollbar-color: #888 #f1f1f1;
+}
+
+.customScrollContainer::-webkit-scrollbar {
+  width: 20px; /* Adjust to make it thicker */
+}
+
+.customScrollContainer::-webkit-scrollbar-thumb {
+  background-color: #888;       /* Scrollbar color */
+  border-radius: 6px;           /* Rounded thumb */
+  border: 3px solid #f1f1f1;    /* Optional padding around thumb */
+}
+
+.customScrollContainer::-webkit-scrollbar-track {
+  background-color: #f1f1f1;    /* Track background */
+}
+
+.sapMInputSuggestionPopup .sapMPopoverCont,
+.sapMInputSuggestionTable {
+    -webkit-overflow-scrolling: touch !important;
+    overflow-y: auto !important;
+}
+
+/* Make scrollbar always visible on mobile */
+.sapMInputSuggestionPopup .sapMListUl {
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+.customInputWithScroll .sapMInputSuggestionPopup {
+    max-height: 400px !important;
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+.noPanelPadding .sapMPanelContent {
+   padding-left: 0 !important;
+   padding-right: 0 !important;
+}
+.sapMPanelBGTranslucent {
+    background-color: #c8d9e6 !important; 
+
+}
+
+
