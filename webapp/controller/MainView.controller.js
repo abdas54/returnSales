@@ -1484,10 +1484,10 @@ sap.ui.define([
                 var retSalesAmount = "";
                 var refAmount = parseFloat(sap.ui.getCore().byId("retReundAmount").getValue()).toFixed(2);
                 if(refAmount > 0){
-                      retSalesAmount = this.refundSaleAmount.toString();
+                      
                 }
                 else{
-                   retSalesAmount =  this.getView().byId("saleAmount").getCount().toString();
+                   refAmount =  "0.00";
                 }
                 var restockFee;
                 if (that.totalRestockFee === "") {
@@ -1514,7 +1514,7 @@ sap.ui.define([
                     "GrossAmount": this.getView().byId("gross").getCount().toString(),
                     "Discount": this.getView().byId("discount").getCount().toString(),
                     "VatAmount": this.getView().byId("vat").getCount().toString(),
-                    "SaleAmount": retSalesAmount,
+                    "SaleAmount": this.getView().byId("saleAmount").getCount().toString(),
                     "Currency": "AED",
                     "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(), // Required for Return Sales
                     "CustomerName": this.getView().byId("customer").getCount(),
@@ -1536,7 +1536,8 @@ sap.ui.define([
                     "VATRefundTag": that.mainData.VATRefundTag,
                     "PlanetURL": that.mainData.PlanetURL,
                     "CustomerType": that.mainData.CustomerType,
-                    "RestockingFee": restockFee
+                    "RestockingFee": restockFee,
+                    "RefundAmount": refAmount.toString()
 
                 }
 
@@ -2012,8 +2013,8 @@ sap.ui.define([
                 var refAmount = parseFloat(sap.ui.getCore().byId("retReundAmount").getValue()).toFixed(2);
                 var totReturnSales = parseFloat(this.getView().byId("saleAmount").getCount());
                 this.refundSaleAmount = 0;
-
-                if(refAmount > totReturnSales){
+                if(refAmount > 0 && refAmount.toString().length > 0){
+                 if(refAmount > totReturnSales){
                   sap.m.MessageBox.error("Refund Amount cannot be more than Return Sales Amount");
                 }
                 else{
@@ -2024,6 +2025,11 @@ sap.ui.define([
                     this.onOpenSignaturePad();
 
                 }
+                }
+                else{
+                     sap.m.MessageBox.error("Enter Refund Amount");
+                }
+                
 
             },
             onClearSignature: function () {
