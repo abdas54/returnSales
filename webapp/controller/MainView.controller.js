@@ -1481,6 +1481,14 @@ sap.ui.define([
             },
             onPressReturn: function (oEvent) {
                 var that = this;
+                var retSalesAmount = "";
+                var refAmount = parseFloat(sap.ui.getCore().byId("retReundAmount").getValue()).toFixed(2);
+                if(refAmount > 0){
+                      retSalesAmount = this.refundSaleAmount.toString();
+                }
+                else{
+                   retSalesAmount =  this.getView().byId("saleAmount").getCount().toString();
+                }
                 var restockFee;
                 if (that.totalRestockFee === "") {
                     restockFee = null;
@@ -1506,7 +1514,7 @@ sap.ui.define([
                     "GrossAmount": this.getView().byId("gross").getCount().toString(),
                     "Discount": this.getView().byId("discount").getCount().toString(),
                     "VatAmount": this.getView().byId("vat").getCount().toString(),
-                    "SaleAmount": this.getView().byId("saleAmount").getCount().toString(),
+                    "SaleAmount": retSalesAmount,
                     "Currency": "AED",
                     "OriginalTransactionId": this.getView().byId("tranNumber").getCount().toString(), // Required for Return Sales
                     "CustomerName": this.getView().byId("customer").getCount(),
@@ -1955,9 +1963,15 @@ sap.ui.define([
                     }).then(function (oFragment) {
                         this._oDialog = oFragment;
                         this.getView().addDependent(this._oDialog);
+                        sap.ui.getCore().byId("retReundAmount").setVisible(false);
+                        sap.ui.getCore().byId("retReundAmount").setValue("");
+                        sap.ui.getCore().byId("retRefundSbmtBtn").setVisible(false);
                         this._oDialog.open();
                     }.bind(this));
                 } else {
+                    sap.ui.getCore().byId("retReundAmount").setVisible(false);
+                    sap.ui.getCore().byId("retReundAmount").setValue("");
+                    sap.ui.getCore().byId("retRefundSbmtBtn").setVisible(false);
                     this._oDialog.open();
                 }
 
@@ -1969,22 +1983,48 @@ sap.ui.define([
                 this._oDialog.close();
             },
             onCloseDialog: function (oEvent) {
+                var bFlag = this.validateReturn();
                 var sSelectedOption = oEvent.getSource().getProperty("header");
                 this.transactionType = "";
-                if (sSelectedOption === "CREDIT NOTE") {
+                if(bFlag){
+                   if (sSelectedOption === "CREDIT NOTE") {
                     this.transactionType = "2";
+                    sap.ui.getCore().byId("retReundAmount").setVisible(true);
+                    sap.ui.getCore().byId("retRefundSbmtBtn").setVisible(true);
                 }
                 if (sSelectedOption === "CREDIT NOTE DRAFT") {
                     this.transactionType = "5";
                 }
-                if (this._oDialog) {
+               
+                
+                if (bFlag && this.transactionType === "5") {
+                     if (this._oDialog) {
                     this._oDialog.close();
-                }
-                var bFlag = this.validateReturn();
-                if (bFlag) {
+                   }
                     this.onOpenSignaturePad();
                     //this.OnSignaturePress();
                 }
+                }
+               
+              
+            },
+            onPressRefundAmount: function(){
+                var refAmount = parseFloat(sap.ui.getCore().byId("retReundAmount").getValue()).toFixed(2);
+                var totReturnSales = parseFloat(this.getView().byId("saleAmount").getCount());
+                this.refundSaleAmount = 0;
+
+                if(refAmount > totReturnSales){
+                  sap.m.MessageBox.error("Refund Amount cannot be more than Return Sales Amount");
+                }
+                else{
+                    this.refundSaleAmount = totReturnSales - refAmount;
+                    if (this._oDialog) {
+                    this._oDialog.close();
+                   }
+                    this.onOpenSignaturePad();
+
+                }
+
             },
             onClearSignature: function () {
 
