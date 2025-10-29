@@ -10,7 +10,7 @@ sap.ui.define([
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, MessageToast, Fragment, MessageBox, BarcodeScanner,epson2) {
+    function (Controller, JSONModel, MessageToast, Fragment, MessageBox, BarcodeScanner, epson2) {
         "use strict";
         var that;
         return Controller.extend("com.eros.returnsales.controller.MainView", {
@@ -707,6 +707,16 @@ sap.ui.define([
                     return false;
                 }
             },
+            enabledOwnStore: function(value){
+
+                if(value === "X"){
+                    return true;
+                }
+                else{
+                    return false;
+                }
+
+            },
             onScan: function () {
                 var that = this;
                 BarcodeScanner.scan(
@@ -1036,7 +1046,7 @@ sap.ui.define([
                 var totalDiscount = 0;
                 var totalGross = 0;
                 var totalRestockingFee = 0;
-             
+
                 for (var count = 0; count < aSelectedContexts.length; count++) {
                     var itemData = this.getView().getModel("ProductModel").getObject(aSelectedContexts[count].sPath);
                     totalPrice = parseFloat(parseFloat(totalPrice) + parseFloat(itemData.returnTotalAmount)).toFixed(2);
@@ -1483,11 +1493,11 @@ sap.ui.define([
                 var that = this;
                 var retSalesAmount = "";
                 var refAmount = parseFloat(sap.ui.getCore().byId("retReundAmount").getValue()).toFixed(2);
-                if(refAmount > 0){
-                      
+                if (refAmount > 0) {
+
                 }
-                else{
-                   refAmount =  "0.00";
+                else {
+                    refAmount = "0.00";
                 }
                 var restockFee;
                 if (that.totalRestockFee === "") {
@@ -1547,15 +1557,15 @@ sap.ui.define([
                         that.getView().byId("tranNumber").setCount(oData.TransactionId);
                         that.getView().setBusy(false);
                         if (that._pAddRecordDialog) {
-                                    that._pAddRecordDialog.setBusy(false);
-                                }
+                            that._pAddRecordDialog.setBusy(false);
+                        }
                         // that.oEvent.setPressEnabled(true);
                         MessageBox.success("Item has been successfully returned.", {
                             onClose: function (sAction) {
                                 // window.location.reload(true);
-                                 for (var count = 1; count <= 2; count++) {
-                                                that.getPDFBase64(count);
-                                            }
+                                for (var count = 1; count <= 2; count++) {
+                                    that.getPDFBase64(count);
+                                }
                             }
                         });
 
@@ -1569,9 +1579,9 @@ sap.ui.define([
                             actions: [MessageBox.Action.OK],
                             onClose: function (oAction) {
                                 if (oAction === MessageBox.Action.OK) {
-                                     if (that._pAddRecordDialog) {
-                                    that._pAddRecordDialog.setBusy(false);
-                                }
+                                    if (that._pAddRecordDialog) {
+                                        that._pAddRecordDialog.setBusy(false);
+                                    }
                                 }
                             }
                         });
@@ -1583,7 +1593,7 @@ sap.ui.define([
 
 
             },
-               getPDFBase64: function (count) {
+            getPDFBase64: function (count) {
                 var that = this;
                 var tranNumber = this.getView().byId("tranNumber").getCount().toString();
                 var sUrl = "/sap/opu/odata/SAP/ZEROS_RETAIL_PROJECT_SRV/TransactionPDFSet(TransactionId='" + tranNumber + "',TransactionCopy='" + count + "')/$value";
@@ -1945,7 +1955,8 @@ sap.ui.define([
                             "OriginalTransactionItem": itemData.TransactionItem,
                             "Reason": itemData.Reason,
                             "RestockingIndicator": itemData.restockingInd ? "X" : "",
-                            "RestockingFee": restockFee
+                            "RestockingFee": restockFee,
+                            "OwnStore" : itemData.OwnStore ? itemData.OwnStore : ""
                         })
                     }
 
@@ -1967,12 +1978,14 @@ sap.ui.define([
                         sap.ui.getCore().byId("retReundAmount").setVisible(false);
                         sap.ui.getCore().byId("retReundAmount").setValue("");
                         sap.ui.getCore().byId("retRefundSbmtBtn").setVisible(false);
+                        sap.ui.getCore().byId("lblRefundAmount").setVisible(false);
                         this._oDialog.open();
                     }.bind(this));
                 } else {
                     sap.ui.getCore().byId("retReundAmount").setVisible(false);
                     sap.ui.getCore().byId("retReundAmount").setValue("");
                     sap.ui.getCore().byId("retRefundSbmtBtn").setVisible(false);
+                    sap.ui.getCore().byId("lblRefundAmount").setVisible(false);
                     this._oDialog.open();
                 }
 
@@ -1987,49 +2000,48 @@ sap.ui.define([
                 var bFlag = this.validateReturn();
                 var sSelectedOption = oEvent.getSource().getProperty("header");
                 this.transactionType = "";
-                if(bFlag){
-                   if (sSelectedOption === "CREDIT NOTE") {
-                    this.transactionType = "2";
-                    sap.ui.getCore().byId("retReundAmount").setVisible(true);
-                    sap.ui.getCore().byId("retRefundSbmtBtn").setVisible(true);
+                if (bFlag) {
+                    if (sSelectedOption === "CREDIT NOTE") {
+                        this.transactionType = "2";
+                        sap.ui.getCore().byId("retReundAmount").setVisible(true);
+                        sap.ui.getCore().byId("retRefundSbmtBtn").setVisible(true);
+                        sap.ui.getCore().byId("lblRefundAmount").setVisible(true);
+                        sap.ui.getCore().byId("retReundAmount").setValue(this.getView().byId("saleAmount").getCount());
+                    }
+                    if (sSelectedOption === "CREDIT NOTE DRAFT") {
+                        this.transactionType = "5";
+                    }
+
+
+                    if (bFlag && this.transactionType === "5") {
+                        if (this._oDialog) {
+                            this._oDialog.close();
+                        }
+                        this.onOpenSignaturePad();
+                        //this.OnSignaturePress();
+                    }
                 }
-                if (sSelectedOption === "CREDIT NOTE DRAFT") {
-                    this.transactionType = "5";
-                }
-               
-                
-                if (bFlag && this.transactionType === "5") {
-                     if (this._oDialog) {
-                    this._oDialog.close();
-                   }
-                    this.onOpenSignaturePad();
-                    //this.OnSignaturePress();
-                }
-                }
-               
-              
+
+
             },
-            onPressRefundAmount: function(){
+            onPressRefundAmount: function () {
                 var refAmount = parseFloat(sap.ui.getCore().byId("retReundAmount").getValue()).toFixed(2);
-                var totReturnSales = parseFloat(this.getView().byId("saleAmount").getCount());
+                var totReturnSales = parseFloat(this.getView().byId("saleAmount").getCount()).toFixed(2);
                 this.refundSaleAmount = 0;
-                if(refAmount > 0 && refAmount.toString().length > 0){
-                 if(refAmount > totReturnSales){
-                  sap.m.MessageBox.error("Refund Amount cannot be more than Return Sales Amount");
+
+                if (refAmount > totReturnSales) {
+                    sap.m.MessageBox.error("Credit Note Amount cannot be more than Return Sales Amount");
                 }
-                else{
+                else {
                     this.refundSaleAmount = totReturnSales - refAmount;
                     if (this._oDialog) {
-                    this._oDialog.close();
-                   }
+                        this._oDialog.close();
+                    }
                     this.onOpenSignaturePad();
 
                 }
-                }
-                else{
-                     sap.m.MessageBox.error("Enter Refund Amount");
-                }
-                
+
+
 
             },
             onClearSignature: function () {
@@ -2094,6 +2106,19 @@ sap.ui.define([
                         content: [oContent],
                         stretch: true,
                         afterOpen: this._initializeCanvas.bind(this),
+                        customHeader: new sap.m.Toolbar({
+                            content: [
+                                new sap.m.Title({ text: "Signature Pad" }),
+                                new sap.m.ToolbarSpacer(),
+                                new sap.m.Button({
+                                    icon: "sap-icon://decline",
+                                    tooltip: "Close",
+                                    press: function () {
+                                        this._pAddRecordDialog.close();
+                                    }.bind(this)
+                                })
+                            ]
+                        })
 
                     });
 
@@ -2156,7 +2181,7 @@ sap.ui.define([
                 sap.ui.core.Fragment.byId(this.getView().getId(), "idSignaturePadCash").clear();
 
             },
-          
+
             onDialogClose: function () {
                 this.onClear();
                 this._pAddRecordDialog.then(
@@ -2167,6 +2192,9 @@ sap.ui.define([
 
 
 
+            },
+            onCloseSignature: function () {
+                that._pAddRecordDialog.close();
             },
             onSave: function () {
                 var that = this,
@@ -2396,7 +2424,7 @@ sap.ui.define([
                 this._oRestockContext.getModel().setProperty("restockingInd", false, this._oRestockContext);
                 this._oRestockDialog.close();
             },
-                _initializeCanvas: function () {
+            _initializeCanvas: function () {
                 this._initializeCanvas1();
                 this._initializeCanvas2();
             },
@@ -2527,6 +2555,20 @@ sap.ui.define([
                     passive: false
                 });
                 canvas.addEventListener("touchend", end);
+            },
+            selectOwnStore: function(oEvent){
+               var bSelected = oEvent.getParameter("selected");
+               var oContext = oEvent.getSource().getBindingContext("ProductModel");
+               var oModel = oContext.getModel();
+               var oData = oContext.getObject();
+               var oView = this.getView();
+
+                if (bSelected) {
+                    oModel.setProperty("OwnStore", "X", oContext);
+                }
+                else{
+                    oModel.setProperty("OwnStore", "", oContext);
+                }
             }
 
 

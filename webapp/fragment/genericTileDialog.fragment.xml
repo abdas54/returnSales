@@ -15,7 +15,8 @@
         </HBox>
         </VBox>
         <VBox >
-         <Input id="retReundAmount" width="60%" visible="false" placeholder="Enter the Refund Amount" class="sapUiSmallMarginBegin sapUiMediumMarginEnd customInputHeight inputStyle sapUiSmallMarginTop sapUiSmallMarginBottom" />
+         <Label id="lblRefundAmount" text="Credit Note Amount" class="sapUiSmallMarginBegin sapUiMediumMarginEnd"></Label>
+         <Input id="retReundAmount" type="Number" width="60%" visible="false" placeholder="Enter the Credit Note Amount" class="sapUiSmallMarginBegin sapUiMediumMarginEnd customInputHeight inputStyle  sapUiSmallMarginBottom" />
          <Button id="retRefundSbmtBtn" visible="false" text="Submit" press="onPressRefundAmount" class="cstmBtn sapUiSmallMarginBeginEnd"/>
         </VBox>
        <endButton>

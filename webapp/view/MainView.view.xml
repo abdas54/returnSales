@@ -89,6 +89,9 @@
 									<Text text="Qty"/>
 								</Column>
 								<Column width="4em" hAlign="Center">
+									<Text text="Own Store"/>
+								</Column>
+								<Column width="4em" hAlign="Center">
 									<Text text="Return Qty."/>
 								</Column>
 							
@@ -132,6 +135,7 @@
 										<Button press="openSerialNumbers" text="{parts: [{path: 'ProductModel>SerialNumbers'}], formatter: '.formatSerialNumText'}"
 										enabled="{parts: [{path: 'ProductModel>SerialNumbers'}], formatter: '.enabledSerialNumber'}"/>
 										<Text text="{ProductModel>Quantity}"/>
+										<CheckBox select="selectOwnStore" enabled="{parts: [{path: 'ProductModel>HomeDelivery'}], formatter: '.enabledOwnStore'}" ></CheckBox>
 										<HBox>
 											<Button type="Transparent" icon="sap-icon://sys-minus" press="onSubtract"/>
 											<Input  type="Number" value="{ProductModel>returnQty}" change="onManualChangeQty"/>
