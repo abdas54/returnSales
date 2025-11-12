@@ -528,7 +528,7 @@ sap.ui.define([
                                 var aCells = oItem.getCells();
 
                                 // The HBox is at the 8th cell (index 7 if zero-based)
-                                var oHBox = aCells[6]; // adjust index based on actual column order
+                                var oHBox = aCells[7]; // adjust index based on actual column order
                                 if (oHBox && oHBox instanceof sap.m.HBox) {
                                     var aHBoxItems = oHBox.getItems();
                                     aHBoxItems[0].setEnabled(true);
@@ -673,7 +673,7 @@ sap.ui.define([
                     var aCells = oItem.getCells();
 
                     // The HBox is at the 8th cell (index 7 if zero-based)
-                    var oHBox = aCells[6]; // adjust index based on actual column order
+                    var oHBox = aCells[7]; // adjust index based on actual column order
                     if (oHBox && oHBox instanceof sap.m.HBox) {
                         var aHBoxItems = oHBox.getItems();
                         aHBoxItems[0].setEnabled(false);
@@ -2058,8 +2058,9 @@ sap.ui.define([
                 const ctx = canvas.getContext("2d");
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             },
-            onSaveSignature: function () {
+            onSaveSignature: function (oEvent) {
                 var that = this;
+                oEvent.getSource().setEnabled(false);
                 this.oPaySignatureload = [];
                 const oCanvasControl = sap.ui.core.Fragment.byId("SignaturePad", "signatureCanvas");
                 const canvas = oCanvasControl.getDomRef();
