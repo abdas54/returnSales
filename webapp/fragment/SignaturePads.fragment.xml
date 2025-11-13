@@ -1,6 +1,10 @@
 <core:FragmentDefinition xmlns="sap.m"
     xmlns:core="sap.ui.core"
-    xmlns:html="http://www.w3.org/1999/xhtml">
+    xmlns:html="http://www.w3.org/1999/xhtml"
+    xmlns:form="sap.ui.layout.form"
+    xmlns:f="sap.f.cards"
+    xmlns:l="sap.ui.layout"
+    xmlns:g="sap.f">
     <HBox>
     <VBox id="signBox" class="sapUiSmallMarginBeginEnd sapUiSmallMarginBottom sapUiSmallMarginTop customerDialog" width="30%" height="480px" >
         <Label text="Cashier Signature" design="Bold" class="sapUiSmallMarginTop sapUiSmallMarginBottom"></Label>
@@ -20,7 +24,22 @@
             <Button text="Submit" press="onSaveSignature" class="sapUiTinySmallMarginTop cstmBtn" />
         </HBox>
     </VBox>
-    <VBox width="10%"></VBox>
+    <VBox id="ipBox" visible="false">
+      <Label text ="Select IP Address for Printer" class="sapUiSmallMarginBottom sapUiSmallMarginBeginEnd sapUiSmallMarginTop" />
+      <g:GridList items="{IPModel>/IPs}" noDataText="No IP's Found" itemPress="onPressIP" class="roundedList">
+            <g:items>
+                <g:GridListItem type="Active">
+                    <VBox class="sapUiSmallMargin">
+                            <layoutData>
+                            <FlexItemData growFactor="1" shrinkFactor="0" />                         
+                            </layoutData>
+                            <Text text="{IPModel>IP}" />
+                            <Text text="{ShowPaymentSection>Mid}" visible="false"/>
+                    </VBox>
+                </g:GridListItem>
+            </g:items>
+        </g:GridList>                      
+    </VBox>
     <VBox id="printBox" visible="false" class="sapUiSmallMarginEnd sapUiSmallMarginBottom sapUiMediumMarginBegin sapUiSmallMarginTop customerDialog" width="60%" height="480px" >
      <Button text="Print" press="onPressPrint" class="sapUiTinySmallMarginTop cstmBtn" />
      <core:HTML id="pdfCanvas" />

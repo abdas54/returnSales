@@ -77,10 +77,14 @@ sap.ui.define([
             },
             validateLoggedInUser: function () {
                 var that = this;
+                that.printerIP = [];
                 this.oModel.read("/StoreIDSet", {
                     success: function (oData) {
                         that.storeID = oData.results[0] ? oData.results[0].Store : "";
                         that.plantID = oData.results[0] ? oData.results[0].Plant : "";
+                        that.printerIP.push(oData.results[0] ? oData.results[0].PrinterIp1 ? oData.results[0].PrinterIp1 : "" : "");
+                        that.printerIP.push(oData.results[0] ? oData.results[0].PrinterIp2 ? oData.results[0].PrinterIp2 : "" : "");
+                        that.printerIP.push(oData.results[0] ? oData.results[0].PrinterIp3 ? oData.results[0].PrinterIp3 : "" : "");
                         that.onPressPayments();
                     },
                     error: function (oError) {
@@ -1562,10 +1566,11 @@ sap.ui.define([
                         // that.oEvent.setPressEnabled(true);
                         MessageBox.success("Item has been successfully returned.", {
                             onClose: function (sAction) {
+                                 that.onOpenPrinterDialog();
                                 // window.location.reload(true);
-                                for (var count = 1; count <= 2; count++) {
-                                    that.getPDFBase64(count);
-                                }
+                                // for (var count = 1; count <= 2; count++) {
+                                //     that.getPDFBase64(count);
+                                // }
                             }
                         });
 
@@ -1591,6 +1596,114 @@ sap.ui.define([
 
 
 
+
+            },
+            onOpenPrinterDialog: function () {
+                var that = this;
+
+                // 1️⃣ Filter out blank IP addresses
+                var aValidIPs = (that.printerIP || []).filter(function (ip) {
+                    return ip && ip.trim() !== "";
+                });
+
+                if (aValidIPs.length === 0) {
+                    sap.m.MessageToast.show("No valid printer IPs found.");
+                    return;
+                }
+
+                // 2️⃣ Create JSON Model for GridList
+                var oIPModel = new sap.ui.model.json.JSONModel({
+                    IPs: aValidIPs.map(function (ip) {
+                        return { IP: ip };
+                    })
+                });
+                var oSignBox = sap.ui.core.Fragment.byId("SignaturePad", "signBox");
+                oSignBox.setVisible(false);
+                var ipBox = sap.ui.core.Fragment.byId("SignaturePad", "ipBox");
+                ipBox.setVisible(true);
+                this._pAddRecordDialog.setModel(oIPModel, "IPModel");
+
+            },
+            onPressIP: function (oEvent) {
+                var that = this;
+                var oItem = oEvent.getParameter("listItem") || oEvent.getSource();
+                var oVBox = oItem.getContent ? oItem.getContent()[0] : oItem.getAggregation("content")[0];
+                var aItems = oVBox.getItems ? oVBox.getItems() : oVBox.getAggregation("items");
+                this.printIP = aItems[0]?.getText();
+                var tranNumber = this.getView().byId("tranNumber").getCount().toString();
+                var sPath = "/PrintPDFSet(TransactionId='" + tranNumber + "',PDFType='A')";
+                this.oModel.read(sPath, {
+                    urlParameters: { "$expand": "ToPDFList" },
+                    success: async function (oData) {
+                        that.aPrintBase64 = oData.ToPDFList.results;
+                        var aResults = oData.ToPDFList.results;
+
+                        var oPrintBox = sap.ui.core.Fragment.byId("SignaturePad", "printBox");
+                        oPrintBox.setVisible(true);
+                        var oHtmlControl = sap.ui.core.Fragment.byId("SignaturePad", "pdfCanvas");
+                        var iframeContent = '<div id="pdf-viewport"></div>';
+                        oHtmlControl.setContent(iframeContent);
+                        oHtmlControl.invalidate(); // force re-render
+                        sap.ui.getCore().applyChanges(); // immediately render changes
+                        oHtmlControl.setVisible(true);
+                        const pdfContainer = document.getElementById("pdf-viewport");
+                        console.log("PDF container:", pdfContainer);
+                        that.aCanvas = [];
+
+
+                        if (aResults && aResults.length > 0) {
+                            // Sort by sequence if needed
+                            aResults.sort((a, b) => parseInt(a.SequenceId) - parseInt(b.SequenceId));
+
+                            for (const oRow of aResults) {
+                                await that.showPDF(oRow.Value);
+                            }
+
+
+                        } else {
+                            sap.m.MessageToast.show("No PDF data available.");
+                        }
+
+
+
+                    },
+                    error: function () {
+                        sap.m.MessageToast.show("Error fetching PDF.");
+                    }
+                });
+
+
+            },
+            showPDF: async function (base64Content) {
+
+
+                var byteCharacters = atob(base64Content);
+                var byteNumbers = new Array(byteCharacters.length);
+                for (var i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                var byteArray = new Uint8Array(byteNumbers);
+                var blob = new Blob([byteArray], {
+                    type: 'application/pdf'
+                });
+                var pdfUrl = URL.createObjectURL(blob);
+                try {
+                    const canvas = await this.loadPdfToCanvas(pdfUrl);
+                    this.canvasp = canvas;
+                    that.aCanvas.push(canvas);
+
+                } catch (err) {
+                    MessageBox.error("Error rendering or printing PDF: " + err.message);
+                }
+
+                var oPrintBox = sap.ui.core.Fragment.byId("SignaturePad", "printBox");
+                oPrintBox.setVisible(true);
+
+                var oSignBox = sap.ui.core.Fragment.byId("SignaturePad", "signBox");
+                oSignBox.setVisible(false);
+
+                var ipBox = sap.ui.core.Fragment.byId("SignaturePad", "ipBox");
+                ipBox.setVisible(false);
 
             },
             getPDFBase64: function (count) {
@@ -1670,7 +1783,8 @@ sap.ui.define([
 
             },
             onPressPrint: function () {
-                this.sendToEpsonPrinter(this.canvasp, this.printerIP);
+                oEvent.getSource().setEnabled(false);
+                this.sendToEpsonPrinter(that.aCanvas, this.printIP);
             },
             isSingleColor: function (imageData) {
                 const stride = 4;
@@ -1697,7 +1811,8 @@ sap.ui.define([
                         const scale = printerWidth / page.getViewport({ scale: 1 }).width;
                         const viewport = page.getViewport({ scale });
                         const pdfContainer = document.getElementById("pdf-viewport");
-                        const canvas = document.createElement("canvas");
+                        //const canvas = document.createElement("canvas");
+                       const { canvas, context } = this.createHiDPICanvas(viewport.width,viewport.height);
                         // pdfContainer.appendChild(canvas);
                         const width = viewport.width;
                         const height = viewport.height;
@@ -1708,7 +1823,7 @@ sap.ui.define([
                         canvas.setAttribute("willReadFrequently", "true");
                         // canvas.width = viewport.width;
                         // canvas.height = viewport.height;
-                        const context = canvas.getContext("2d", { willReadFrequently: true });
+                       // const context = canvas.getContext("2d", { willReadFrequently: true });
                         context.clearRect(0, 0, width, height);
 
                         await page.render({
@@ -1798,6 +1913,38 @@ sap.ui.define([
                     MessageToast.show("Failed to load PDF: " + error.message);
                 }
             },
+            getPixelRatio: function () {
+                var ctx = document.createElement("canvas").getContext("2d"),
+                    dpr = window.devicePixelRatio || 1,
+                    bsr =
+                        ctx.webkitBackingStorePixelRatio ||
+                        ctx.mozBackingStorePixelRatio ||
+                        ctx.msBackingStorePixelRatio ||
+                        ctx.oBackingStorePixelRatio ||
+                        ctx.backingStorePixelRatio ||
+                        1;
+
+                return dpr / bsr;
+            },
+
+            createHiDPICanvas: function (w, h, ratio) {
+                if (!ratio) {
+                    ratio = this.getPixelRatio();
+                }
+                const canvas = document.createElement("canvas");
+                canvas.width = w * ratio;
+                canvas.height = h * ratio;
+                canvas.style.width = w + "px";
+                canvas.style.height = h + "px";
+                const context = canvas.getContext("2d", {
+                    willReadFrequently: true,
+                });
+                context.setTransform(ratio, 0, 0, ratio, 0, 0);
+                context.imageSmoothingEnabled = true;
+                context.imageSmoothingQuality = "high";
+                context.font = "64px NotoSansArabic";
+                return { canvas, context };
+            },
             ensurePdfJsLib: async function () {
                 if (!window.pdfjsLib) {
                     await new Promise((resolve, reject) => {
@@ -1815,59 +1962,70 @@ sap.ui.define([
                 }
             },
 
-            sendToEpsonPrinter: function (canvases, printerIp, count) {
+            sendToEpsonPrinter: async function (canvasesArray, printerIp, count) {
                 var ePosDev = new epson.ePOSDevice();
+                var that = this;
                 //var ip = this.getView().byId("ipaddr").getValue();
                 // var wdth = this.getView().byId("wdth").getValue();
                 // var ht = this.getView().byId("heht").getValue();
+                //printerIp = this.printerIP;
 
-                ePosDev.connect(printerIp, 8043, function (resultConnect) {
-                    if (resultConnect === "OK" || resultConnect == "SSL_CONNECT_OK") {
-                        ePosDev.createDevice("local_printer", ePosDev.DEVICE_TYPE_PRINTER,
-                            { crypto: false, buffer: false },
-                            function (deviceObj, resultCreate) {
-                                if (resultCreate === "OK") {
-                                    var printer = deviceObj;
+                for (let a = 0; a < canvasesArray.length; a++) {
+                    that.counter = a;
+                    const canvases = canvasesArray[a];
+                    await new Promise((resolve, reject) => {
+                        ePosDev.connect(printerIp, 8043, function (resultConnect) {
+                            if (resultConnect === "OK" || resultConnect == "SSL_CONNECT_OK") {
+                                ePosDev.createDevice("local_printer", ePosDev.DEVICE_TYPE_PRINTER,
+                                    { crypto: false, buffer: false },
+                                    async function (deviceObj, resultCreate) {
+                                        if (resultCreate === "OK") {
+                                            var printer = deviceObj;
 
 
 
-                                    printer.brightness = 1.0;
-                                    printer.halftone = printer.HALFTONE_ERROR_DIFFUSION;
-                                    for (const canvas of canvases) {
-                                        printer.addImage(canvas.getContext("2d", { willReadFrequently: true }), 0, 0, canvas.width, canvas.height, printer.COLOR_1, printer.MODE_MONO);
+                                            printer.brightness = 1.0;
+                                            printer.halftone = printer.HALFTONE_ERROR_DIFFUSION;
+                                            for (const canvas of canvases) {
+                                                printer.addImage(canvas.getContext("2d", { willReadFrequently: true }), 0, 0, canvas.width, canvas.height, printer.COLOR_1, printer.MODE_MONO);
+                                            }
+
+
+                                            printer.addCut(printer.CUT_FEED);
+                                            await printer.send();
+                                            resolve();
+                                            if (canvasesArray.length === that.counter + 1) {
+                                                window.location.reload(true);
+                                            }
+                                            // printer.send(function (resultSend) {
+                                            //     if (resultSend === "OK") {
+                                            //         sap.m.MessageToast.show("Printed successfully!");
+                                            //     } else {
+                                            //         sap.m.MessageBox.error("Print failed: " + resultSend);
+                                            //     }
+                                            // });
+                                        } else {
+                                            sap.m.MessageBox.error("Failed to create device: " + resultCreate);
+                                            reject(resultCreate);
+                                        }
                                     }
-
-
-                                    printer.addCut(printer.CUT_FEED);
-                                    printer.send();
-                                    if (count == 2) {
-                                        window.location.reload(true);
-                                    }
-                                    // printer.send(function (resultSend) {
-                                    //     if (resultSend === "OK") {
-                                    //         sap.m.MessageToast.show("Printed successfully!");
-                                    //     } else {
-                                    //         sap.m.MessageBox.error("Print failed: " + resultSend);
-                                    //     }
-                                    // });
-                                } else {
-                                    sap.m.MessageBox.error("Failed to create device: " + resultCreate);
-                                }
+                                );
+                            } else {
+                                //sap.m.MessageBox.error("Connection failed: " + resultConnect);
+                                sap.m.MessageBox.error("Connection failed: " + resultConnect, {
+                                    title: "Error",
+                                    actions: [sap.m.MessageBox.Action.OK],
+                                    onClose: function (oAction) {
+                                        if (oAction === sap.m.MessageBox.Action.OK) {
+                                            window.location.reload(true);
+                                        }
+                                    }.bind(this)
+                                });
                             }
-                        );
-                    } else {
-                        //sap.m.MessageBox.error("Connection failed: " + resultConnect);
-                        sap.m.MessageBox.error("Connection failed: " + resultConnect, {
-                            title: "Error",
-                            actions: [sap.m.MessageBox.Action.OK],
-                            onClose: function (oAction) {
-                                if (oAction === sap.m.MessageBox.Action.OK) {
-                                    window.location.reload(true);
-                                }
-                            }.bind(this)
                         });
-                    }
-                });
+                    });
+                }
+
             },
 
             oPayloadPayments: function () {
@@ -2115,7 +2273,16 @@ sap.ui.define([
                                     icon: "sap-icon://decline",
                                     tooltip: "Close",
                                     press: function () {
-                                        this._pAddRecordDialog.close();
+                                        if(this.aCanvas && this.aCanvas.length > 0){
+                                        window.location.reload(true);
+                                        }
+                                        else if(sap.ui.core.Fragment.byId("SignaturePad", "ipBox").getVisible()) {
+                                        window.location.reload(true);
+                                        }
+                                        else{
+                                          this._pAddRecordDialog.close();
+                                        }
+                                        
                                     }.bind(this)
                                 })
                             ]
@@ -2127,7 +2294,20 @@ sap.ui.define([
                 }
                 var oPrintBox = sap.ui.core.Fragment.byId("SignaturePad", "printBox");
                 oPrintBox.setVisible(false);
+
+
                 this._pAddRecordDialog.open();
+                this._pAddRecordDialog.attachAfterOpen(() => {
+                    var oHtmlControl = sap.ui.core.Fragment.byId("SignaturePad", "pdfCanvas");
+                    oHtmlControl.setContent('<div id="pdf-viewport"></div>');
+                    oHtmlControl.setVisible(true);
+
+                    setTimeout(() => {
+                        const pdfContainer = document.getElementById("pdf-viewport");
+                        console.log("PDF container after open:", pdfContainer);
+                        // you can render PDF now
+                    }, 100);
+                });
             },
             OnSignaturePress: function () {
                 var that = this,
