@@ -2562,6 +2562,7 @@ sap.ui.define([
                         }
                     } else {
                         // If unchecked → clear restocking fee
+                        this.getView().byId("saleAmount").setCount(parseFloat(parseFloat(this.getView().byId("saleAmount").getCount()) + parseFloat(oData.restockingFee)).toFixed(2));
                         oModel.setProperty("restockingFee", "", oContext);
                     }
                 }
