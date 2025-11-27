@@ -1631,6 +1631,9 @@ sap.ui.define([
                 var aItems = oVBox.getItems ? oVBox.getItems() : oVBox.getAggregation("items");
                 this.printIP = aItems[0]?.getText();
                 var tranNumber = this.getView().byId("tranNumber").getCount().toString();
+                if (that._pAddRecordDialog) {
+                                    that._pAddRecordDialog.setBusy(true);
+                                }
                 var sPath = "/PrintPDFSet(TransactionId='" + tranNumber + "',PDFType='A')";
                 this.oModel.read(sPath, {
                     urlParameters: { "$expand": "ToPDFList" },
@@ -1657,6 +1660,9 @@ sap.ui.define([
 
                             for (const oRow of aResults) {
                                 await that.showPDF(oRow.Value);
+                                if (that._pAddRecordDialog) {
+                                    that._pAddRecordDialog.setBusy(false);
+                                }
                             }
 
 
@@ -2187,7 +2193,7 @@ sap.ui.define([
                 var totReturnSales = parseFloat(this.getView().byId("saleAmount").getCount()).toFixed(2);
                 this.refundSaleAmount = 0;
 
-                if (refAmount > totReturnSales) {
+                if (parseFloat(refAmount) > parseFloat(totReturnSales)) {
                     sap.m.MessageBox.error("Credit Note Amount cannot be more than Return Sales Amount");
                 }
                 else {
