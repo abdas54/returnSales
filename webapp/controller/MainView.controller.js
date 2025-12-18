@@ -475,6 +475,7 @@ sap.ui.define([
                         that.ToDiscounts = oData.ToDiscounts;
                         that.ToPayments = oData.ToPayments;
                         that.ToSerials = oData.ToSerials;
+                        that.VATRefundTag = oData.VATRefundTag;
                         that.getView().byId("tranNumber").setCount(tranNumber);
                         that.getView().byId("customer").setCount(oData.CustomerName);
 
@@ -1564,7 +1565,14 @@ sap.ui.define([
                             that._pAddRecordDialog.setBusy(false);
                         }
                         // that.oEvent.setPressEnabled(true);
-                        MessageBox.success("Item has been successfully returned.", {
+                        var smsg = "";
+                        if(that.VATRefundTag && that.VATRefundTag !== ""){
+                           smsg = "Tag " + that.VATRefundTag + " Voided Successfully. \n Item has been successfully returned."
+                        }
+                        else{
+                            smsg = "Item has been successfully returned."
+                        }
+                        MessageBox.success(smsg, {
                             onClose: function (sAction) {
                                  that.onOpenPrinterDialog();
                                 // window.location.reload(true);
@@ -1576,7 +1584,8 @@ sap.ui.define([
 
                     },
                     error: function (oError) {
-
+                        const sbmtSign = sap.ui.core.Fragment.byId("SignaturePad", "sbmtSignature");
+                        sbmtSign.setEnabled(true);
                         that.getView().setBusy(false);
                         sap.m.MessageBox.show(JSON.parse(oError.responseText).error.message.value, {
                             icon: sap.m.MessageBox.Icon.Error,

@@ -21,7 +21,7 @@
         </html:canvas>
         <HBox justifyContent="SpaceBetween">
             <Button text="Clear" press="onClearSignature" class="sapUiTinySmallMarginTop cstmBtn" />
-            <Button text="Submit" press="onSaveSignature" class="sapUiTinySmallMarginTop cstmBtn" />
+            <Button text="Submit" press="onSaveSignature" id="sbmtSignature" class="sapUiTinySmallMarginTop cstmBtn" />
         </HBox>
     </VBox>
     <VBox id="ipBox" visible="false">
