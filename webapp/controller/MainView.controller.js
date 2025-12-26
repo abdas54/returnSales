@@ -2013,7 +2013,14 @@ sap.ui.define([
                                             await printer.send();
                                             resolve();
                                             if (canvasesArray.length === that.counter + 1) {
-                                                window.location.reload(true);
+                                               // window.location.reload(true);
+                                               var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
+                                            oCrossAppNav.toExternal({
+                                                target: {
+                                                    semanticObject: "Shell",
+                                                    action: "home"
+                                                }
+                                            });
                                             }
                                             // printer.send(function (resultSend) {
                                             //     if (resultSend === "OK") {
@@ -2035,7 +2042,14 @@ sap.ui.define([
                                     actions: [sap.m.MessageBox.Action.OK],
                                     onClose: function (oAction) {
                                         if (oAction === sap.m.MessageBox.Action.OK) {
-                                            window.location.reload(true);
+                                             var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
+                                            oCrossAppNav.toExternal({
+                                                target: {
+                                                    semanticObject: "Shell",
+                                                    action: "home"
+                                                }
+                                            });
+                                            //window.location.reload(true);
                                         }
                                     }.bind(this)
                                 });
@@ -2282,7 +2296,7 @@ sap.ui.define([
                         title: "Signature Pad",
                         content: [oContent],
                         stretch: true,
-                        afterOpen: this._initializeCanvas.bind(this),
+                        afterOpen: this._initCanvasWithFixes.bind(this),  // NEW: Calls wrapper with fixes
                         customHeader: new sap.m.Toolbar({
                             content: [
                                 new sap.m.Title({ text: "Signature Pad" }),
@@ -2306,7 +2320,7 @@ sap.ui.define([
                             ]
                         })
 
-                    });
+                    }).addStyleClass("stockDialog");
 
                     this.getView().addDependent(this._pAddRecordDialog);
                 }
@@ -2325,6 +2339,10 @@ sap.ui.define([
                         console.log("PDF container after open:", pdfContainer);
                         // you can render PDF now
                     }, 100);
+
+                     setTimeout(() => {
+                        this._fixSignatureOffset();
+                    }, 400);
                 });
             },
             OnSignaturePress: function () {
@@ -2769,6 +2787,101 @@ sap.ui.define([
                 else{
                     oModel.setProperty("OwnStore", "", oContext);
                 }
+            },
+                        _initCanvasWithFixes: function () {
+                // Call old inits first (keeps everything as-is)
+                if (this._initializeCanvas1) {
+                    this._initializeCanvas1();
+                }
+                if (this._initializeCanvas2) {
+                    this._initializeCanvas2();
+                }
+
+                // Now add DPI/offset fixes to both canvases
+                const canvasIds = ["signatureCanvas", "signatureCanvas1"];
+                canvasIds.forEach(canvasId => {
+                    const oCanvasControl = sap.ui.core.Fragment.byId("SignaturePad", canvasId);
+                    if (!oCanvasControl) return;
+
+                    const canvas = oCanvasControl.getDomRef();
+                    if (!canvas || !canvas.getContext) return;
+
+                    // Get displayed size
+                    const rect = canvas.getBoundingClientRect();
+                    const cssWidth = rect.width || 450;
+                    const cssHeight = rect.height || 200;
+
+                    // DPI scaling (reuse your existing getPixelRatio)
+                    const dpr = this.getPixelRatio() || 1;
+                    if (dpr > 1) {  // Only if needed
+                        canvas.width = cssWidth * dpr;
+                        canvas.height = cssHeight * dpr;
+                        canvas.style.width = cssWidth + 'px';
+                        canvas.style.height = cssHeight + 'px';
+
+                        const ctx = canvas.getContext("2d");
+                        ctx.scale(dpr, dpr);  // Fix drawing scale
+                        ctx.strokeStyle = '#000000';
+                        ctx.lineWidth = 2;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                    }
+
+                    // Override the position function additively (monkey-patch the old getEventPosition)
+                    if (!canvas._fixedGetEventPosition) {  // Avoid re-patching
+                        canvas._fixedGetEventPosition = (e) => {
+                            const canvasRect = canvas.getBoundingClientRect();
+                            let clientX, clientY;
+                            if (e.touches && e.touches.length > 0) {
+                                clientX = e.touches[0].clientX;
+                                clientY = e.touches[0].clientY;
+                            } else {
+                                clientX = e.clientX;
+                                clientY = e.clientY;
+                            }
+                            // Key: Scale to match canvas resolution (fixes offset)
+                            const x = (clientX - canvasRect.left) * (canvas.width / canvasRect.width);
+                            const y = (clientY - canvasRect.top) * (canvas.height / canvasRect.height);
+                            console.log(`Fixed position for ${canvasId}: x=${x.toFixed(0)}, y=${y.toFixed(0)} (DPR=${dpr})`);
+                            return { x, y };
+                        };
+                        canvas._fixedGetEventPosition.fixed = true;  // Flag it
+                    }
+                });
+
+                // Optional: Patch clears for scaled canvases (uncomment if needed)
+                // this._patchedClearSignature = function() { ... } // See below if you want
+            },
+            _fixSignatureOffset: function () {
+                const dpr = this.getPixelRatio() || 1;
+                if (dpr === 1) return;
+
+                console.log(`Safe final fix: correct scaling + thin smooth line (dpr = ${dpr})`);
+
+                ["signatureCanvas", "signatureCanvas1"].forEach(canvasId => {
+                    const oCanvasControl = sap.ui.core.Fragment.byId("SignaturePad", canvasId);
+                    if (!oCanvasControl || !oCanvasControl.getDomRef()) return;
+
+                    const canvas = oCanvasControl.getDomRef();
+                    const ctx = canvas.getContext("2d");
+
+                    // Re-apply scaling
+                    const rect = canvas.getBoundingClientRect();
+                    canvas.width = rect.width * dpr;
+                    canvas.height = rect.height * dpr;
+                    ctx.scale(dpr, dpr);
+                    // Clear old drawing
+                    ctx.clearRect(0, 0, rect.width, rect.height);
+
+                    // Force thin, smooth, single line style (overrides old)
+                    ctx.lineWidth = 1.0;  // Thin natural line (try 1.2 for thinner)
+                    ctx.lineCap = "round";
+                    ctx.lineJoin = "round";
+                    ctx.strokeStyle = "#000000";
+                    ctx.miterLimit = 1;  // Prevents sharp corners
+
+                    console.log(`Safe style fix applied to ${canvasId}`);
+                });
             }
 
 
